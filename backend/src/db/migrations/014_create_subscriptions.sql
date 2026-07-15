@@ -1,0 +1,20 @@
+CREATE TABLE IF NOT EXISTS subscriptions (
+  id VARCHAR(36) PRIMARY KEY,
+  user_id VARCHAR(36) NOT NULL,
+  tier_id VARCHAR(36) NOT NULL,
+  status ENUM('active', 'expired', 'cancelled', 'pending') NOT NULL DEFAULT 'pending',
+  order_id VARCHAR(100) UNIQUE DEFAULT NULL,
+  transaction_id VARCHAR(100) DEFAULT NULL,
+  payment_status ENUM('pending', 'settlement', 'expire', 'deny', 'cancel') DEFAULT 'pending',
+  payment_method VARCHAR(50) DEFAULT NULL,
+  gross_amount DECIMAL(10,2) NOT NULL DEFAULT 0,
+  period_start TIMESTAMP NULL,
+  period_end TIMESTAMP NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (tier_id) REFERENCES pricing_tiers(id) ON DELETE CASCADE,
+  INDEX idx_sub_user (user_id),
+  INDEX idx_sub_order (order_id),
+  INDEX idx_sub_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

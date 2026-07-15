@@ -1,0 +1,22 @@
+CREATE TABLE IF NOT EXISTS scenarios (
+  id CHAR(36) PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  slug VARCHAR(255) UNIQUE NOT NULL,
+  mode ENUM('duel','coop') NOT NULL,
+  duration_seconds INT DEFAULT 600,
+  category VARCHAR(50),
+  difficulty ENUM('beginner','intermediate','advanced'),
+  tags JSON,
+  role_a_briefing TEXT NOT NULL,
+  role_a_secret_objective TEXT,
+  role_a_name VARCHAR(100),
+  role_b_briefing TEXT NOT NULL,
+  role_b_secret_objective TEXT,
+  role_b_name VARCHAR(100),
+  ai_criteria JSON NOT NULL,
+  resource_links JSON,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_scenarios_category (category),
+  INDEX idx_scenarios_slug (slug)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
