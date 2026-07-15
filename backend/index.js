@@ -32,33 +32,33 @@ const server = http.createServer(app);
 // Socket.io setup
 const io = new Server(server, {
   cors: {
-    origin: config.env === 'development' ? true : config.frontendUrl,
+    origin: config.env === 'development' ? true : [config.frontendUrl, ...config.frontendUrls],
     credentials: true,
   },
 });
 
 // Middlewares
 app.use(helmet());
+
+const allowedOrigins = (config.env === 'development') ? [
+  config.frontendUrl,
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'http://localhost:5173',
+  /^http:\/\/localhost:\d+$/,
+] : [
+  config.frontendUrl,
+  ...(config.frontendUrls || []),
+];
+
 app.use(
   cors({
     origin: function (origin, cb) {
-      // Allow requests with no origin (curl, mobile apps, etc)
       if (!origin) return cb(null, true);
-      // In development, allow any localhost origin
-      if (config.env === 'development') {
-        const allowed = [
-          config.frontendUrl,
-          'http://localhost:3000',
-          'http://localhost:3001',
-          'http://localhost:5173',
-          /^http:\/\/localhost:\d+$/,
-        ];
-        const match = allowed.some((a) =>
-          typeof a === 'string' ? origin === a : a.test(origin)
-        );
-        return cb(null, match);
-      }
-      if (origin === config.frontendUrl) return cb(null, true);
+      const match = allowedOrigins.some((a) =>
+        typeof a === 'string' ? origin === a || origin === a.replace(/\/$/, '') : a.test(origin)
+      );
+      if (match) return cb(null, true);
       cb(new Error('Not allowed by CORS'));
     },
     credentials: true,

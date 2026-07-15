@@ -7,6 +7,7 @@ const envSchema = Joi.object({
   NODE_ENV: Joi.string().valid('development', 'production', 'test').default('development'),
   PORT: Joi.number().default(3000),
   FRONTEND_URL: Joi.string().uri().required(),
+  FRONTEND_URLS: Joi.string().optional(),  // comma-separated list of additional frontend URLs
   BACKEND_URL: Joi.string().uri().optional(),
 
   DB_HOST: Joi.string().required(),
@@ -40,6 +41,7 @@ module.exports = {
   env: envVars.NODE_ENV,
   port: envVars.PORT,
   frontendUrl: envVars.FRONTEND_URL,
+  frontendUrls: envVars.FRONTEND_URLS ? envVars.FRONTEND_URLS.split(',').map((u) => u.trim()) : [],
   backendUrl: envVars.BACKEND_URL || `http://localhost:${envVars.PORT}`,
   mysql: {
     host: envVars.DB_HOST,

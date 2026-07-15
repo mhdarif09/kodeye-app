@@ -184,6 +184,16 @@ docker exec -it kodeye_backend sh
 
 ## Troubleshooting
 
+### CORS Error saat Register/Login (500)
+Penyebab: Browser di `app.kodeye.com` atau `kodeye.net` kirim request ke `api.kodeye.net`, tapi backend CORS cuma allow satu origin.
+
+**Fix:** Pastikan environment variable `FRONTEND_URLS` di docker-compose berisi semua domain yang dipake:
+```yaml
+FRONTEND_URL: https://kodeye.net
+FRONTEND_URLS: https://app.kodeye.com,https://www.kodeye.net
+```
+Backend akan allow semua origin yang ada di `FRONTEND_URL` + `FRONTEND_URLS`.
+
 ### Frontend tidak bisa connect ke API
 - Pastikan `NEXT_PUBLIC_API_URL=https://api.kodeye.net` di docker-compose
 - Pastikan DNS api.kodeye.net pointing ke IP VPS
