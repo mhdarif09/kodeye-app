@@ -23,6 +23,7 @@ const matchmakingService = require('./src/services/matchmakingService');
 const sessionRoutes = require('./src/routes/sessions');
 const { router: adminRoutes, publicRouter: adminPublicRoutes } = require('./src/routes/admin');
 const paymentRoutes = require('./src/routes/payment');
+const curriculumRoutes = require('./src/routes/curriculum');
 const { handleNotification } = require('./src/services/paymentService');
 const { initSocket } = require('./src/socket/index');
 
@@ -115,6 +116,7 @@ app.use('/api/sessions', sessionRoutes);
 app.use('/api/admin', adminPublicRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/payment', paymentRoutes);
+app.use('/api/curriculum', curriculumRoutes);
 
 // Health Check
 app.get('/health', async (req, res, next) => {
