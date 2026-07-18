@@ -16,8 +16,6 @@ services:
   redis:
     image: redis:7-alpine
     container_name: kodeye_redis
-    ports:
-      - "127.0.0.1:6379:6379"
     volumes:
       - redis_data:/data
     restart: unless-stopped
@@ -34,24 +32,36 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3000
+
       FRONTEND_URL: ${FRONTEND_URL:-https://kodeye.net}
       FRONTEND_URLS: ${FRONTEND_URLS:-https://app.kodeye.net,https://www.kodeye.net}
       BACKEND_URL: https://api.kodeye.net
+
       DB_HOST: mysql
       DB_PORT: 3306
       DB_USER: ${DB_USER:-root}
       DB_PASSWORD: ${DB_PASSWORD:-secret}
       DB_NAME: ${DB_NAME:-kodeye_db}
+
       REDIS_URL: redis://redis:6379
+
       JWT_SECRET: ${JWT_SECRET}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+
       GROQ_API_KEY: ${GROQ_API_KEY}
+
       IPAYMU_VIRTUAL_ACCOUNT: ${IPAYMU_VIRTUAL_ACCOUNT}
       IPAYMU_API_KEY: ${IPAYMU_API_KEY}
       IPAYMU_MODE: ${IPAYMU_MODE:-sandbox}
+
+    ports:
+      - "127.0.0.1:3000:3000"
+
     restart: unless-stopped
+
     networks:
       - kodeye_net
 
@@ -62,26 +72,17 @@ services:
         NEXT_PUBLIC_API_URL: https://api.kodeye.net
         NEXT_PUBLIC_SOCKET_URL: https://api.kodeye.net
         NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
-    container_name: kodeye_frontend
-    depends_on:
-      - backend
-    restart: unless-stopped
-    networks:
-      - kodeye_net
 
-  nginx:
-    image: nginx:alpine
-    container_name: kodeye_nginx
+    container_name: kodeye_frontend
+
     depends_on:
-      - frontend
       - backend
+
     ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/kodeye.conf:/etc/nginx/conf.d/kodeye.conf:ro
-      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - "127.0.0.1:3001:3001"
+
     restart: unless-stopped
+
     networks:
       - kodeye_net
 
