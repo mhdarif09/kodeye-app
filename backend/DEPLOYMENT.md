@@ -77,7 +77,7 @@ docker compose -f backend/docker-compose.yml exec backend node src/db/migrate.js
 ```
 
 ### Google Login 400
-Tambahkan `https://app.kodeye.com` ke Google Cloud Console → Authorized JavaScript origins.
+Tambahkan `https://app.kodeye.net` ke Google Cloud Console → Authorized JavaScript origins.
 
 ### Image upload 403
 Pastikan sudah login (JWT di cookie).

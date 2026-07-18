@@ -35,7 +35,7 @@ services:
       NODE_ENV: production
       PORT: 3000
       FRONTEND_URL: ${FRONTEND_URL:-https://kodeye.net}
-      FRONTEND_URLS: ${FRONTEND_URLS:-https://app.kodeye.com,https://www.kodeye.net}
+      FRONTEND_URLS: ${FRONTEND_URLS:-https://app.kodeye.net,https://www.kodeye.net}
       BACKEND_URL: https://api.kodeye.net
       DB_HOST: mysql
       DB_PORT: 3306
