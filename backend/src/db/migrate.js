@@ -40,8 +40,11 @@ async function migrate() {
       const filePath = path.join(MIGRATIONS_DIR, file);
       const sql = fs.readFileSync(filePath, 'utf8');
 
-      // Execute SQL
-      await connection.query(sql);
+      // Execute each statement separately (multi-statement not enabled)
+      const statements = sql.split(';').map(s => s.trim()).filter(Boolean);
+      for (const stmt of statements) {
+        await connection.query(stmt);
+      }
 
       // Record migration success (re-check table exists, since 001 creates it)
       const [rows] = await connection.query(`SHOW TABLES LIKE 'migrations'`);
