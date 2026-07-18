@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { useAuthStore } from "@/store/authStore";
 import { cn } from "@/lib/utils";
+import api from "@/lib/api";
 
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/dashboard", icon: "📊" },
@@ -11,12 +13,21 @@ const NAV_ITEMS = [
   { label: "History", href: "/history", icon: "🕒" },
   { label: "Langganan", href: "/langganan", icon: "💳" },
   { label: "Settings", href: "/settings", icon: "⚙️" },
+  { label: "Feedback", href: "/feedback", icon: "💬" },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const logout = useAuthStore((state) => state.logout);
+  const [feedbackRequest, setFeedbackRequest] = useState<{ active: boolean; message: string } | null>(null);
+  const [dismissed, setDismissed] = useState(false);
+
+  useEffect(() => {
+    api.get("/api/admin/feedback/request-status")
+      .then((res) => setFeedbackRequest(res.data.data))
+      .catch(() => {});
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -77,6 +88,27 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col h-[calc(100vh-73px)] md:h-screen overflow-y-auto">
+        {feedbackRequest?.active && !dismissed && pathname !== "/feedback" && (
+          <div className="bg-primary/10 border-b border-primary/20 px-6 py-3 flex items-center justify-between">
+            <p className="text-sm text-primary font-medium">
+              {feedbackRequest.message || "Kami ingin mendengar pendapatmu! Silakan kirim feedback."}
+            </p>
+            <div className="flex items-center gap-2 shrink-0">
+              <Link
+                href="/feedback"
+                className="text-xs h-7 px-3 rounded-md bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors inline-flex items-center"
+              >
+                Beri Feedback
+              </Link>
+              <button
+                onClick={() => setDismissed(true)}
+                className="text-xs text-muted-foreground hover:text-foreground"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        )}
         {children}
       </main>
 

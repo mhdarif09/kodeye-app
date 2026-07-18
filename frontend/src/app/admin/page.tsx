@@ -10,6 +10,9 @@ const TABS = [
   { key: "overview", label: "Overview", icon: "📊" },
   { key: "curriculum", label: "Kurikulum", icon: "📖" },
   { key: "pricing", label: "Pricing", icon: "💰" },
+  { key: "donasi", label: "Donasi", icon: "☕" },
+  { key: "feedback", label: "Feedback", icon: "💬" },
+  { key: "payment", label: "Payment", icon: "💳" },
   { key: "users", label: "Users", icon: "👥" },
 ];
 
@@ -79,6 +82,18 @@ export default function AdminPage() {
   const [editTier, setEditTier] = useState<Tier | null>(null);
   const [showTierForm, setShowTierForm] = useState(false);
 
+  // Donation state
+  const [donationConfig, setDonationConfig] = useState({ donation_enabled: "false", donation_settings: "{}" });
+  const [donationMethods, setDonationMethods] = useState<{ name: string; account: string; icon: string }[]>([]);
+
+  // Feedback state
+  const [feedbackList, setFeedbackList] = useState<any[]>([]);
+  const [feedbackRequestActive, setFeedbackRequestActive] = useState(false);
+  const [feedbackRequestMessage, setFeedbackRequestMessage] = useState("");
+
+  // Payment config state
+  const [paymentConfig, setPaymentConfig] = useState<Record<string, string>>({});
+
   useEffect(() => {
     if (!user?.role || user.role !== "admin") {
       router.push("/dashboard");
@@ -87,6 +102,9 @@ export default function AdminPage() {
     fetchStats();
     fetchCurriculum();
     fetchPricing();
+    fetchDonationConfig();
+    fetchFeedback();
+    fetchPaymentConfig();
   }, []);
 
   const fetchStats = async () => {
@@ -108,6 +126,24 @@ export default function AdminPage() {
       const res = await api.get("/api/admin/pricing");
       setTiers(res.data.data ?? []);
     } catch { setTiers([]); }
+  };
+
+  const fetchDonationConfig = async () => {
+    try {
+      const res = await api.get("/api/admin/site-config");
+      const cfg = res.data.data;
+      setDonationConfig(cfg);
+      try { setDonationMethods(JSON.parse(cfg.donation_settings || "{}").methods || []); } catch { setDonationMethods([]); }
+      setFeedbackRequestActive(cfg.feedback_request_active === "true");
+      setFeedbackRequestMessage(cfg.feedback_request_message || "");
+    } catch {}
+  };
+
+  const fetchFeedback = async () => {
+    try {
+      const res = await api.get("/api/admin/feedback");
+      setFeedbackList(res.data.data ?? []);
+    } catch { setFeedbackList([]); }
   };
 
   // ── Curriculum handlers ──
@@ -224,6 +260,64 @@ export default function AdminPage() {
       toast.success("Deleted");
       fetchPricing();
     } catch { toast.error("Failed to delete"); }
+  };
+
+  const handleSaveDonation = async () => {
+    try {
+      await api.put("/api/admin/site-config", {
+        donation_enabled: donationConfig.donation_enabled,
+        donation_settings: JSON.stringify({ methods: donationMethods }),
+      });
+      toast.success("Donation config saved");
+    } catch { toast.error("Failed to save"); }
+  };
+
+  const handleAddDonationMethod = () => {
+    setDonationMethods((prev) => [...prev, { name: "", account: "", icon: "❤️" }]);
+  };
+
+  const handleUpdateDonationMethod = (i: number, field: string, value: string) => {
+    setDonationMethods((prev) => {
+      const copy = [...prev];
+      copy[i] = { ...copy[i], [field]: value };
+      return copy;
+    });
+  };
+
+  const handleRemoveDonationMethod = (i: number) => {
+    setDonationMethods((prev) => prev.filter((_, idx) => idx !== i));
+  };
+
+  const handleFeedbackStatus = async (id: string, status: string) => {
+    try {
+      await api.patch(`/api/admin/feedback/${id}`, { status });
+      toast.success("Status updated");
+      fetchFeedback();
+    } catch { toast.error("Failed to update status"); }
+  };
+
+  const handleFeedbackRequest = async () => {
+    try {
+      await api.post("/api/admin/feedback/request", {
+        active: feedbackRequestActive,
+        message: feedbackRequestMessage,
+      });
+      toast.success("Feedback request updated");
+    } catch { toast.error("Failed to update"); }
+  };
+
+  const fetchPaymentConfig = async () => {
+    try {
+      const res = await api.get("/api/admin/payment-config");
+      setPaymentConfig(res.data.data || {});
+    } catch {}
+  };
+
+  const handleSavePaymentConfig = async () => {
+    try {
+      await api.put("/api/admin/payment-config", paymentConfig);
+      toast.success("Payment config saved");
+    } catch { toast.error("Failed to save"); }
   };
 
   return (
@@ -439,6 +533,226 @@ export default function AdminPage() {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {tab === "donasi" && (
+          <div className="space-y-4">
+            <h1 className="text-2xl font-bold tracking-tight">Donasi</h1>
+            <div className="p-4 border border-border rounded-xl space-y-4">
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={donationConfig.donation_enabled === "true"}
+                  onChange={(e) => setDonationConfig((p) => ({ ...p, donation_enabled: e.target.checked ? "true" : "false" }))}
+                  className="rounded"
+                />
+                Tampilkan halaman donasi
+              </label>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium">Metode Pembayaran</p>
+                  <button onClick={handleAddDonationMethod} className="text-xs px-3 py-1.5 rounded-md bg-primary text-primary-foreground">+ Tambah</button>
+                </div>
+                {donationMethods.map((m, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <input
+                      value={m.icon} onChange={(e) => handleUpdateDonationMethod(i, "icon", e.target.value)}
+                      placeholder="Icon" className="w-16 h-9 px-2 text-sm rounded-md border border-input bg-transparent"
+                    />
+                    <input
+                      value={m.name} onChange={(e) => handleUpdateDonationMethod(i, "name", e.target.value)}
+                      placeholder="Nama (e.g. Dana)" className="flex-1 h-9 px-3 text-sm rounded-md border border-input bg-transparent"
+                    />
+                    <input
+                      value={m.account} onChange={(e) => handleUpdateDonationMethod(i, "account", e.target.value)}
+                      placeholder="No Rekening / Link" className="flex-1 h-9 px-3 text-sm rounded-md border border-input bg-transparent"
+                    />
+                    <button onClick={() => handleRemoveDonationMethod(i)} className="text-xs text-red-500 hover:text-red-400 shrink-0">Hapus</button>
+                  </div>
+                ))}
+              </div>
+
+              <button onClick={handleSaveDonation} className="px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-colors">
+                Simpan
+              </button>
+            </div>
+          </div>
+        )}
+
+        {tab === "feedback" && (
+          <div className="space-y-4">
+            <h1 className="text-2xl font-bold tracking-tight">Feedback</h1>
+
+            <div className="p-4 border border-border rounded-xl space-y-3">
+              <p className="text-sm font-medium">Minta Feedback ke User</p>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={feedbackRequestActive}
+                  onChange={(e) => setFeedbackRequestActive(e.target.checked)}
+                  className="rounded"
+                />
+                Tampilkan banner minta feedback
+              </label>
+              <textarea
+                value={feedbackRequestMessage}
+                onChange={(e) => setFeedbackRequestMessage(e.target.value)}
+                placeholder="Pesan untuk user (e.g. Kami ingin mendengar pendapatmu!)"
+                className="w-full h-20 px-3 py-2 text-sm rounded-md border border-input bg-transparent resize-none"
+              />
+              <button onClick={handleFeedbackRequest} className="px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-colors">
+                Simpan
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              {feedbackList.map((fb: any) => (
+                <div key={fb.id} className="p-4 rounded-xl border border-border bg-secondary/10">
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <p className="text-sm font-medium">{fb.user_name || "Anonim"}</p>
+                      <p className="text-xs text-muted-foreground">{fb.user_email} · {fb.type}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${
+                        fb.status === "pending" ? "bg-yellow-500/10 text-yellow-500" :
+                        fb.status === "reviewed" ? "bg-blue-500/10 text-blue-500" :
+                        "bg-green-500/10 text-green-500"
+                      }`}>{fb.status}</span>
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-3">{fb.message}</p>
+                  <div className="flex gap-2">
+                    {["pending", "reviewed", "resolved"].map((s) => (
+                      <button
+                        key={s}
+                        onClick={() => handleFeedbackStatus(fb.id, s)}
+                        className={`text-xs px-2 py-1 rounded-md border ${
+                          fb.status === s ? "border-primary bg-primary/10 text-primary" : "border-border hover:bg-muted"
+                        }`}
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              {feedbackList.length === 0 && (
+                <p className="text-sm text-muted-foreground text-center py-8">Belum ada feedback dari user.</p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {tab === "payment" && (
+          <div className="space-y-4">
+            <h1 className="text-2xl font-bold tracking-tight">Payment Gateway</h1>
+
+            {/* iPaymu */}
+            <div className="p-4 border border-border rounded-xl space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="font-semibold">iPaymu</h2>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={paymentConfig.ipaymu_enabled === "true"}
+                    onChange={(e) => setPaymentConfig((p) => ({ ...p, ipaymu_enabled: e.target.checked ? "true" : "false" }))}
+                    className="rounded"
+                  />
+                  Active
+                </label>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Virtual Account</label>
+                  <input
+                    value={paymentConfig.ipaymu_virtual_account || ""}
+                    onChange={(e) => setPaymentConfig((p) => ({ ...p, ipaymu_virtual_account: e.target.value }))}
+                    className="w-full h-9 px-3 text-sm rounded-md border border-input bg-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">API Key</label>
+                  <input
+                    type="password"
+                    value={paymentConfig.ipaymu_api_key || ""}
+                    onChange={(e) => setPaymentConfig((p) => ({ ...p, ipaymu_api_key: e.target.value }))}
+                    className="w-full h-9 px-3 text-sm rounded-md border border-input bg-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Mode</label>
+                  <select
+                    value={paymentConfig.ipaymu_mode || "sandbox"}
+                    onChange={(e) => setPaymentConfig((p) => ({ ...p, ipaymu_mode: e.target.value }))}
+                    className="w-full h-9 px-3 text-sm rounded-md border border-input bg-transparent"
+                  >
+                    <option value="sandbox">Sandbox</option>
+                    <option value="production">Production</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Midtrans */}
+            <div className="p-4 border border-border rounded-xl space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="font-semibold">Midtrans</h2>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={paymentConfig.midtrans_enabled === "true"}
+                    onChange={(e) => setPaymentConfig((p) => ({ ...p, midtrans_enabled: e.target.checked ? "true" : "false" }))}
+                    className="rounded"
+                  />
+                  Active
+                </label>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Merchant ID</label>
+                  <input
+                    value={paymentConfig.midtrans_merchant_id || ""}
+                    onChange={(e) => setPaymentConfig((p) => ({ ...p, midtrans_merchant_id: e.target.value }))}
+                    className="w-full h-9 px-3 text-sm rounded-md border border-input bg-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Client Key</label>
+                  <input
+                    value={paymentConfig.midtrans_client_key || ""}
+                    onChange={(e) => setPaymentConfig((p) => ({ ...p, midtrans_client_key: e.target.value }))}
+                    className="w-full h-9 px-3 text-sm rounded-md border border-input bg-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Server Key</label>
+                  <input
+                    type="password"
+                    value={paymentConfig.midtrans_server_key || ""}
+                    onChange={(e) => setPaymentConfig((p) => ({ ...p, midtrans_server_key: e.target.value }))}
+                    className="w-full h-9 px-3 text-sm rounded-md border border-input bg-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Mode</label>
+                  <select
+                    value={paymentConfig.midtrans_mode || "sandbox"}
+                    onChange={(e) => setPaymentConfig((p) => ({ ...p, midtrans_mode: e.target.value }))}
+                    className="w-full h-9 px-3 text-sm rounded-md border border-input bg-transparent"
+                  >
+                    <option value="sandbox">Sandbox</option>
+                    <option value="production">Production</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <button onClick={handleSavePaymentConfig} className="px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-colors">
+              Simpan
+            </button>
           </div>
         )}
 

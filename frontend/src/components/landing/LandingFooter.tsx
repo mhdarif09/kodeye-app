@@ -20,6 +20,7 @@ export function LandingFooter() {
               <ul className="space-y-1.5">
                 <li><a href="/#scenarios" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Skenario</a></li>
                 <li><Link href="/langganan" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Harga</Link></li>
+                <li><Link href="/donasi" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Donasi</Link></li>
               </ul>
             </div>
             <div className="space-y-2">

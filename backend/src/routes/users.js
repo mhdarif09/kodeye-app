@@ -1,9 +1,12 @@
 const express = require('express');
+const { v4: uuidv4 } = require('uuid');
+const pool = require('../db/mysql');
 const userService = require('../services/userService');
 const statsService = require('../services/statsService');
 const validate = require('../middleware/validate');
 const schemas = require('../validation/userSchemas');
 const verifyJWT = require('../middleware/auth');
+const AppError = require('../utils/AppError');
 
 const router = express.Router();
 
@@ -62,6 +65,22 @@ router.get('/me/history', async (req, res, next) => {
     res.status(200).json({ data: result });
   } catch (error) {
     next(error);
+  }
+});
+
+// ── User Feedback ──────────────────────────────────────────
+router.post('/feedback', async (req, res, next) => {
+  try {
+    const { type, message } = req.body;
+    if (!message || !message.trim()) return next(new AppError('Message is required', 400));
+    const id = uuidv4();
+    await pool.query(
+      'INSERT INTO user_feedback (id, user_id, type, message) VALUES (?, ?, ?, ?)',
+      [id, req.user.id, type || 'suggestion', message.trim()]
+    );
+    res.status(201).json({ data: { id } });
+  } catch (err) {
+    next(err);
   }
 });
 

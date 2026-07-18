@@ -1,7 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
-import { useEffect, useState, useCallback } from "react";
+import { Suspense, useEffect, useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import api from "@/lib/api";
@@ -45,6 +44,9 @@ function LanggananContent() {
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState<string | null>(null);
   const [currentSub, setCurrentSub] = useState<Subscription | null>(null);
+  const [gatewayConfig, setGatewayConfig] = useState<Record<string, string>>({});
+  const [selectedGateway, setSelectedGateway] = useState<string>("ipaymu");
+  const [showGatewayPicker, setShowGatewayPicker] = useState<string | null>(null);
 
   const fetchSubscription = useCallback(async () => {
     try {
@@ -73,6 +75,7 @@ function LanggananContent() {
 
     fetchTiers();
     fetchSubscription();
+    fetchGatewayConfig();
   }, [user, searchParams]);
 
   const fetchTiers = async () => {
@@ -86,16 +89,52 @@ function LanggananContent() {
     }
   };
 
-  const handleSubscribe = async (tierId: string) => {
-    setPaying(tierId);
+  const fetchGatewayConfig = async () => {
     try {
-      const res = await api.post("/api/payment/create-transaction", { tierId, period });
-      const { paymentUrl } = res.data.data;
+      const res = await api.get("/api/payment/config");
+      const cfg = res.data.data || {};
+      setGatewayConfig(cfg);
+      // default: ipaymu if enabled, else midtrans, else none
+      if (cfg.ipaymu_enabled === "true") setSelectedGateway("ipaymu");
+      else if (cfg.midtrans_enabled === "true") setSelectedGateway("midtrans");
+    } catch {}
+  };
 
-      if (paymentUrl) {
-        window.location.href = paymentUrl;
+  const handleSubscribe = async (tierId: string) => {
+    const ipaymuEnabled = gatewayConfig.ipaymu_enabled === "true";
+    const midtransEnabled = gatewayConfig.midtrans_enabled === "true";
+
+    if (ipaymuEnabled && midtransEnabled) {
+      // Both available — show picker first
+      setShowGatewayPicker(tierId);
+      return;
+    }
+
+    const gateway = ipaymuEnabled ? "ipaymu" : midtransEnabled ? "midtrans" : null;
+    if (!gateway) return toast.error("Tidak ada metode pembayaran tersedia");
+    setSelectedGateway(gateway);
+    proceedPayment(tierId, gateway);
+  };
+
+  const proceedPayment = async (tierId: string, gateway: string) => {
+    setPaying(tierId);
+    setShowGatewayPicker(null);
+    try {
+      const res = await api.post("/api/payment/create-transaction", { tierId, period, gateway });
+      const { redirectUrl, paymentUrl, token } = res.data.data;
+
+      const targetUrl = redirectUrl || paymentUrl;
+      if (targetUrl) {
+        window.location.href = targetUrl;
+      } else if (token && gateway === "midtrans") {
+        // fallback: use Midtrans redirect_url with token
+        const mode = gatewayConfig.midtrans_mode || "sandbox";
+        const snapUrl = mode === "production"
+          ? "https://app.midtrans.com/snap/v2/vtweb/"
+          : "https://app.sandbox.midtrans.com/snap/v2/vtweb/";
+        window.location.href = `${snapUrl}${token}`;
       } else {
-        toast.error("Gagal mendapatkan URL pembayaran");
+        toast.error("Gagal mendapatkan halaman pembayaran");
         setPaying(null);
       }
     } catch (err: any) {
@@ -136,6 +175,42 @@ function LanggananContent() {
             </button>
           ))}
         </div>
+
+        {/* Gateway Picker Modal */}
+        {showGatewayPicker && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+            <div className="bg-card rounded-2xl p-6 w-full max-w-sm mx-4 shadow-xl">
+              <h2 className="text-lg font-bold mb-1">Pilih Metode Pembayaran</h2>
+              <p className="text-sm text-muted-foreground mb-4">Pilih metode yang kamu inginkan</p>
+              <div className="space-y-3">
+                {gatewayConfig.ipaymu_enabled === "true" && (
+                  <button
+                    onClick={() => proceedPayment(showGatewayPicker, "ipaymu")}
+                    className="w-full p-4 rounded-xl border border-border hover:border-primary hover:bg-primary/5 transition-all text-left"
+                  >
+                    <p className="font-semibold">iPaymu</p>
+                    <p className="text-xs text-muted-foreground">Transfer bank, e-wallet, convenience store</p>
+                  </button>
+                )}
+                {gatewayConfig.midtrans_enabled === "true" && (
+                  <button
+                    onClick={() => proceedPayment(showGatewayPicker, "midtrans")}
+                    className="w-full p-4 rounded-xl border border-border hover:border-primary hover:bg-primary/5 transition-all text-left"
+                  >
+                    <p className="font-semibold">Midtrans</p>
+                    <p className="text-xs text-muted-foreground">Kartu kredit, transfer bank, e-wallet</p>
+                  </button>
+                )}
+              </div>
+              <button
+                onClick={() => setShowGatewayPicker(null)}
+                className="w-full mt-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Batal
+              </button>
+            </div>
+          </div>
+        )}
 
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

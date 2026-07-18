@@ -111,8 +111,8 @@ app.use('/api/users', userRoutes);
 app.use('/api/scenarios', scenarioRoutes);
 app.use('/api/matchmaking', matchmakingRoutes);
 app.use('/api/sessions', sessionRoutes);
-app.use('/api/admin', adminRoutes);
 app.use('/api/admin', adminPublicRoutes);
+app.use('/api/admin', adminRoutes);
 app.use('/api/payment', paymentRoutes);
 
 // Health Check

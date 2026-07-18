@@ -29,6 +29,11 @@ const envSchema = Joi.object({
   IPAYMU_VIRTUAL_ACCOUNT: Joi.string().required(),
   IPAYMU_API_KEY: Joi.string().required(),
   IPAYMU_MODE: Joi.string().valid('sandbox', 'production').default('sandbox'),
+
+  MIDTRANS_SERVER_KEY: Joi.string().optional().allow(''),
+  MIDTRANS_CLIENT_KEY: Joi.string().optional().allow(''),
+  MIDTRANS_MERCHANT_ID: Joi.string().optional().allow(''),
+  MIDTRANS_MODE: Joi.string().valid('sandbox', 'production').default('sandbox'),
 }).unknown();
 
 const { value: envVars, error } = envSchema.prefs({ errors: { label: 'key' } }).validate(process.env);
@@ -69,5 +74,14 @@ module.exports = {
     apiKey: envVars.IPAYMU_API_KEY,
     mode: envVars.IPAYMU_MODE,
     baseUrl: envVars.IPAYMU_MODE === 'production' ? 'https://my.ipaymu.com' : 'https://sandbox.ipaymu.com',
+  },
+  midtrans: {
+    serverKey: envVars.MIDTRANS_SERVER_KEY,
+    clientKey: envVars.MIDTRANS_CLIENT_KEY,
+    merchantId: envVars.MIDTRANS_MERCHANT_ID,
+    mode: envVars.MIDTRANS_MODE || 'sandbox',
+    snapUrl: envVars.MIDTRANS_MODE === 'production'
+      ? 'https://app.midtrans.com/snap/v1/transactions'
+      : 'https://app.sandbox.midtrans.com/snap/v1/transactions',
   },
 };
