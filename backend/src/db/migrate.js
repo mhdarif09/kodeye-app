@@ -1,11 +1,26 @@
 const fs = require('fs');
 const path = require('path');
-const pool = require('./mysql');
+const mysql = require('mysql2/promise');
+const config = require('../config/env');
 const logger = require('../utils/logger');
 
 const MIGRATIONS_DIR = path.join(__dirname, 'migrations');
 
+// Dedicated pool with multi-statement support for migrations only
+function createMigrationPool() {
+  return mysql.createPool({
+    host: config.mysql.host,
+    port: config.mysql.port,
+    user: config.mysql.user,
+    password: config.mysql.password,
+    database: config.mysql.database,
+    multipleStatements: true,
+    connectionLimit: 1,
+  });
+}
+
 async function migrate() {
+  const pool = createMigrationPool();
   let connection;
   try {
     logger.info('Connecting to the database for migration...');
@@ -40,11 +55,8 @@ async function migrate() {
       const filePath = path.join(MIGRATIONS_DIR, file);
       const sql = fs.readFileSync(filePath, 'utf8');
 
-      // Execute each statement separately (multi-statement not enabled)
-      const statements = sql.split(';').map(s => s.trim()).filter(Boolean);
-      for (const stmt of statements) {
-        await connection.query(stmt);
-      }
+      // Execute SQL with multi-statement support
+      await connection.query(sql);
 
       // Record migration success (re-check table exists, since 001 creates it)
       const [rows] = await connection.query(`SHOW TABLES LIKE 'migrations'`);
@@ -65,7 +77,7 @@ async function migrate() {
     if (connection) {
       connection.release();
     }
-    // Close the pool properly to allow process to exit cleanly
+    // Close the migration pool
     await pool.end();
     logger.info('Database connection pool closed.');
   }

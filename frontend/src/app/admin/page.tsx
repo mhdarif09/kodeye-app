@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import Link from "next/link";
 import toast from "react-hot-toast";
 import api from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
@@ -45,6 +46,9 @@ interface CurriculumItem {
   url: string;
   author: string;
   is_published: number;
+  access: string;
+  level_number: number;
+  mode: string;
 }
 
 interface TierFeature {
@@ -378,12 +382,20 @@ export default function AdminPage() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h1 className="text-2xl font-bold tracking-tight">Kelola Kurikulum</h1>
-              <button
-                onClick={() => { setEditItem(null); setShowForm(true); }}
-                className="px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-colors"
-              >
-                + Tambah
-              </button>
+              <div className="flex gap-2">
+                <Link
+                  href="/admin/kurikulum"
+                  className="px-4 py-2 text-sm rounded-lg border border-border hover:bg-muted transition-colors"
+                >
+                  Kelola Lengkap →
+                </Link>
+                <button
+                  onClick={() => { setEditItem(null); setShowForm(true); }}
+                  className="px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-colors"
+                >
+                  + Tambah
+                </button>
+              </div>
             </div>
 
             {showForm && (
@@ -396,7 +408,19 @@ export default function AdminPage() {
                     <option value="video">Video</option>
                     <option value="course">Course</option>
                   </select>
-                  <input name="category" defaultValue={editItem?.category} placeholder="Category (e.g. general, frontend)" className="h-9 px-3 text-sm rounded-md border border-input bg-transparent" />
+                  <select name="access" defaultValue={editItem?.access || "free"} className="h-9 px-3 text-sm rounded-md border border-input bg-transparent">
+                    <option value="free">Free</option>
+                    <option value="giat">Giat</option>
+                    <option value="premium">Premium</option>
+                  </select>
+                  <input name="category" defaultValue={editItem?.category} placeholder="Category (e.g. engineering, debugging)" className="h-9 px-3 text-sm rounded-md border border-input bg-transparent" />
+                  <input name="level_number" type="number" min="1" max="5" defaultValue={editItem?.level_number ?? ""} placeholder="Level 1-5" className="h-9 px-3 text-sm rounded-md border border-input bg-transparent" />
+                  <select name="mode" defaultValue={editItem?.mode || "solo"} className="h-9 px-3 text-sm rounded-md border border-input bg-transparent">
+                    <option value="solo">Solo</option>
+                    <option value="duel">Duel</option>
+                    <option value="peer">Peer</option>
+                    <option value="coop">Co-op</option>
+                  </select>
                   <input name="url" defaultValue={editItem?.url} placeholder="URL" className="col-span-2 h-9 px-3 text-sm rounded-md border border-input bg-transparent" required />
                   <input name="author" defaultValue={editItem?.author} placeholder="Author" className="h-9 px-3 text-sm rounded-md border border-input bg-transparent" />
                   <label className="flex items-center gap-2 text-sm">
@@ -416,7 +440,7 @@ export default function AdminPage() {
                 <div key={item.id} className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-muted/30">
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium truncate">{item.title}</p>
-                    <p className="text-xs text-muted-foreground">{item.type} · {item.category || "uncategorized"}{item.is_published ? "" : " · Draft"}</p>
+                    <p className="text-xs text-muted-foreground">{item.type} · {item.category || "uncategorized"} · Lv.{item.level_number ?? "-"} · {item.mode || "solo"}{item.is_published ? "" : " · Draft"}</p>
                   </div>
                   <div className="flex gap-2 shrink-0 ml-4">
                     <button onClick={() => { setEditItem(item); setShowForm(true); }} className="text-xs text-muted-foreground hover:text-foreground">Edit</button>

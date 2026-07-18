@@ -101,13 +101,13 @@ router.get('/curriculum', async (req, res, next) => {
 
 router.post('/curriculum', async (req, res, next) => {
   try {
-    const { title, description, type, url, category, thumbnail_url, author, is_published, sort_order } = req.body;
+    const { title, description, type, url, category, thumbnail_url, author, is_published, sort_order, access, content, level_number, mode } = req.body;
     if (!title || !url) return next(new AppError('Title and URL are required', 400));
     const id = uuidv4();
     await pool.query(
-      `INSERT INTO curriculum (id, title, description, type, url, category, thumbnail_url, author, is_published, sort_order)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, title, description || '', type || 'blog', url, category || null, thumbnail_url || null, author || null, is_published ? 1 : 0, sort_order || 0]
+      `INSERT INTO curriculum (id, title, description, type, url, category, level_number, mode, thumbnail_url, author, is_published, sort_order, access, content)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [id, title, description || '', type || 'blog', url, category || null, parseInt(level_number) || null, mode || 'solo', thumbnail_url || null, author || null, is_published ? 1 : 0, parseInt(sort_order) || 0, access || 'free', content || null]
     );
     res.status(201).json({ data: { id } });
   } catch (err) {
@@ -119,7 +119,7 @@ router.put('/curriculum/:id', async (req, res, next) => {
   try {
     const [[existing]] = await pool.query('SELECT id FROM curriculum WHERE id = ?', [req.params.id]);
     if (!existing) return next(new AppError('Curriculum not found', 404));
-    const allowed = ['title', 'description', 'type', 'url', 'category', 'thumbnail_url', 'author', 'is_published', 'sort_order'];
+    const allowed = ['title', 'description', 'type', 'url', 'category', 'level_number', 'mode', 'thumbnail_url', 'author', 'is_published', 'sort_order', 'access', 'content'];
     const sets = [];
     const values = [];
     for (const key of allowed) {

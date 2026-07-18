@@ -7,8 +7,8 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
   // Define protected routes and prefixes
-  const protectedPaths = ["/dashboard", "/profile", "/history", "/settings", "/onboarding", "/curriculum", "/langganan"];
-  const protectedPrefixes = ["/arena/", "/admin"];
+  const protectedPaths = ["/dashboard", "/profile", "/history", "/settings", "/onboarding", "/curriculum", "/langganan", "/kurikulum", "/sertifikat"];
+  const protectedPrefixes = ["/arena/", "/admin", "/kurikulum/"];
   
   const isProtected = protectedPaths.includes(pathname) || protectedPrefixes.some(prefix => pathname.startsWith(prefix));
 

@@ -9,6 +9,8 @@ import api from "@/lib/api";
 
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/dashboard", icon: "📊" },
+  { label: "Kurikulum", href: "/kurikulum", icon: "📖" },
+  { label: "Sertifikat", href: "/sertifikat", icon: "🎖️" },
   { label: "Profile", href: "/profile", icon: "👤" },
   { label: "History", href: "/history", icon: "🕒" },
   { label: "Langganan", href: "/langganan", icon: "💳" },
