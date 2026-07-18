@@ -1,11 +1,13 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { LandingNav } from "@/components/landing/LandingNav";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { Testimonials } from "@/components/landing/Testimonials";
+import api from "@/lib/api";
 
 // ─── Reusable Section Wrapper ─────────────────────────────────────────────────
 
@@ -280,6 +282,14 @@ function ClosingCTA() {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function LandingPage() {
+  const [donation, setDonation] = useState<{ enabled: boolean; settings: any } | null>(null);
+
+  useEffect(() => {
+    api.get("/api/admin/site-config/donation")
+      .then((res) => setDonation(res.data.data))
+      .catch(() => {});
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
       <LandingNav />
@@ -385,6 +395,39 @@ export default function LandingPage() {
             <Testimonials />
           </div>
         </Section>
+
+        {/* ── Donasi ── */}
+        {donation?.enabled && (
+          <Section className="py-16 md:py-24 px-6">
+            <div className="max-w-6xl mx-auto text-center space-y-6">
+              <span className="text-4xl">☕</span>
+              <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Dukung Kodeye</h2>
+              <p className="text-muted-foreground max-w-md mx-auto">
+                Dukung pengembangan Kodeye agar tetap gratis dan terbuka untuk semua developer.
+              </p>
+              {donation?.settings?.methods?.length > 0 && (
+                <div className="flex flex-wrap justify-center gap-3 pt-2">
+                  {donation.settings.methods.slice(0, 3).map((m: any) => (
+                    <button
+                      key={m.name}
+                      onClick={() => navigator.clipboard.writeText(m.account)}
+                      className="h-10 px-5 rounded-lg border border-border text-sm font-medium hover:bg-muted transition-colors flex items-center gap-2"
+                    >
+                      <span>{m.icon || "💳"}</span>
+                      {m.name}: {m.account}
+                    </button>
+                  ))}
+                  <Link
+                    href="/donasi"
+                    className="h-10 px-5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors inline-flex items-center"
+                  >
+                    Lihat Semua
+                  </Link>
+                </div>
+              )}
+            </div>
+          </Section>
+        )}
 
         {/* ── Closing CTA ── */}
         <ClosingCTA />

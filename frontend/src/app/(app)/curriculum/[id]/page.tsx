@@ -115,7 +115,7 @@ export default function CurriculumReaderPage() {
               rel="noopener noreferrer"
               className="inline-flex h-10 px-5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors items-center"
             >
-              Buka di {new URL(item.url!).hostname}
+              Buka di {(() => { try { return new URL(item.url!).hostname; } catch { return "sumber eksternal"; } })()}
             </a>
           </div>
         )}

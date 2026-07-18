@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import api from "@/lib/api";
 import { formatCategory } from "@/lib/utils";
-import { FALLBACK_CURRICULUM } from "@/lib/constants";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -47,10 +46,11 @@ export default function DashboardPage() {
   const userRole = user?.role;
   const [stats, setStats] = useState<UserStats | null>(null);
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
-  const [curriculum, setCurriculum] = useState<CurriculumItem[]>(FALLBACK_CURRICULUM);
+  const [curriculum, setCurriculum] = useState<CurriculumItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [aiLoading, setAiLoading] = useState(false);
   const [page, setPage] = useState(1);
+  const [donation, setDonation] = useState<{ enabled: boolean; settings: any } | null>(null);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [matchMode, setMatchMode] = useState<"duel" | "coop">("duel");
@@ -58,15 +58,17 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [statsRes, scenariosRes, curriculumRes] = await Promise.all([
+        const [statsRes, scenariosRes, curriculumRes, donationRes] = await Promise.all([
           api.get("/api/users/me/stats").catch(() => ({ data: { data: { totalSessions: 0, winRate: 0, highestElo: 1200 } } })),
           api.get("/api/scenarios").catch(() => ({ data: { data: [] } })),
           api.get("/api/admin/curriculum/public").catch(() => ({ data: { data: [] } })),
+          api.get("/api/admin/site-config/donation").catch(() => null),
         ]);
         setStats(statsRes.data.data ?? statsRes.data);
         setScenarios(scenariosRes.data.data ?? []);
         const apiData = curriculumRes.data?.data ?? [];
-        if (apiData.length > 0) setCurriculum(apiData);
+        setCurriculum(apiData);
+        if (donationRes?.data?.data) setDonation(donationRes.data.data);
       } catch (error) {
         console.error("Failed to fetch dashboard data", error);
       } finally {
@@ -327,6 +329,36 @@ export default function DashboardPage() {
           </div>
         )}
       </div>
+
+      {/* Donasi */}
+      {donation?.enabled && donation?.settings?.methods?.length > 0 && (
+        <div className="p-5 rounded-xl border border-border bg-secondary/10 space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">☕</span>
+            <h2 className="text-base font-semibold">Dukung Kodeye</h2>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Dukung pengembangan Kodeye agar tetap gratis dan terbuka untuk semua.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {donation.settings.methods.slice(0, 3).map((m: any) => (
+              <button
+                key={m.name}
+                onClick={() => navigator.clipboard.writeText(m.account)}
+                className="px-3 py-1.5 text-xs rounded-lg border border-border hover:bg-muted transition-colors"
+              >
+                {m.icon || "💳"} {m.name}: {m.account}
+              </button>
+            ))}
+            <button
+              onClick={() => router.push("/donasi")}
+              className="px-3 py-1.5 text-xs rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-colors"
+            >
+              Lihat Semua
+            </button>
+          </div>
+        </div>
+      )}
 
       <MatchmakingModal
         isOpen={isModalOpen}

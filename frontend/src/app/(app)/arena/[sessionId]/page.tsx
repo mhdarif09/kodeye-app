@@ -79,7 +79,7 @@ export default function ArenaPage({ params }: { params: Promise<{ sessionId: str
   }
 
   return (
-    <div className="flex flex-col h-screen bg-background overflow-hidden">
+    <div className="flex flex-col h-dvh bg-background">
       {!isStarted && isJoined && (
         <ReadyScreen
           scenarioTitle={scenarioTitle}

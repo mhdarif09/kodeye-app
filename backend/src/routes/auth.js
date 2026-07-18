@@ -10,7 +10,7 @@ const router = express.Router();
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 5, // 5 requests per 15 minutes
+  max: 20,
   message: {
     error: {
       message: 'Too many authentication attempts, please try again later.',
@@ -19,7 +19,7 @@ const authLimiter = rateLimit({
   }
 });
 
-router.post('/register', authLimiter, validate(schemas.registerSchema), async (req, res, next) => {
+router.post('/register', validate(schemas.registerSchema), async (req, res, next) => {
   try {
     const { email, password, displayName } = req.body;
     const user = await authService.register(email, password, displayName);
