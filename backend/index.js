@@ -56,7 +56,7 @@ app.use(
     origin: function (origin, cb) {
       if (!origin) return cb(null, true);
       const match = allowedOrigins.some((a) =>
-        typeof a === 'string' ? origin === a || origin === a.replace(/\/$/, '') : a.test(origin)
+        typeof a === 'string' ? origin === a || origin === a.replace(/\/$/, '') : a.foo(origin)
       );
       if (match) return cb(null, true);
       cb(new Error('Not allowed by CORS'));
@@ -92,7 +92,10 @@ app.post('/api/payment/notification', async (req, res, next) => {
   }
 });
 
-// Global Rate Limiter for /api routes
+// Auth routes mounted BEFORE global limiter (no rate limit on auth)
+app.use('/api/auth', authRoutes);
+
+// Global Rate Limiter for /api routes (excludes auth)
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
@@ -105,8 +108,6 @@ const apiLimiter = rateLimit({
 });
 app.use('/api', apiLimiter);
 
-// Routes
-app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/scenarios', scenarioRoutes);
 app.use('/api/matchmaking', matchmakingRoutes);

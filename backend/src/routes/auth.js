@@ -1,5 +1,4 @@
 const express = require('express');
-const rateLimit = require('express-rate-limit');
 const authService = require('../services/authService');
 const validate = require('../middleware/validate');
 const schemas = require('../validation/authSchemas');
@@ -7,17 +6,6 @@ const verifyJWT = require('../middleware/auth');
 const logger = require('../utils/logger');
 
 const router = express.Router();
-
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 20,
-  message: {
-    error: {
-      message: 'Too many authentication attempts, please try again later.',
-      code: 'RATE_LIMIT_EXCEEDED'
-    }
-  }
-});
 
 router.post('/register', validate(schemas.registerSchema), async (req, res, next) => {
   try {
@@ -29,7 +17,7 @@ router.post('/register', validate(schemas.registerSchema), async (req, res, next
   }
 });
 
-router.post('/login', authLimiter, validate(schemas.loginSchema), async (req, res, next) => {
+router.post('/login', validate(schemas.loginSchema), async (req, res, next) => {
   try {
     const { email, password } = req.body;
     const { user, accessToken, refreshToken } = await authService.login(email, password);
@@ -39,7 +27,7 @@ router.post('/login', authLimiter, validate(schemas.loginSchema), async (req, re
   }
 });
 
-router.post('/google', authLimiter, validate(schemas.googleAuthSchema), async (req, res, next) => {
+router.post('/google', validate(schemas.googleAuthSchema), async (req, res, next) => {
   try {
     const { id_token } = req.body;
     const { user, accessToken, refreshToken } = await authService.loginWithGoogle(id_token);
@@ -68,7 +56,7 @@ router.post('/logout', verifyJWT, async (req, res, next) => {
   }
 });
 
-router.post('/forgot-password', authLimiter, validate(schemas.forgotPasswordSchema), async (req, res, next) => {
+router.post('/forgot-password', validate(schemas.forgotPasswordSchema), async (req, res, next) => {
   try {
     const { email } = req.body;
     const token = await authService.forgotPassword(email);
@@ -79,7 +67,7 @@ router.post('/forgot-password', authLimiter, validate(schemas.forgotPasswordSche
   }
 });
 
-router.post('/reset-password', authLimiter, validate(schemas.resetPasswordSchema), async (req, res, next) => {
+router.post('/reset-password', validate(schemas.resetPasswordSchema), async (req, res, next) => {
   try {
     const { token, newPassword } = req.body;
     await authService.resetPassword(token, newPassword);
