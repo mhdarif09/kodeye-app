@@ -99,7 +99,7 @@ app.use('/api/auth', authRoutes);
 // Global Rate Limiter for /api routes (excludes auth)
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
+  max: 300, // Limit each IP to 300 requests per 15 minutes (~1 req / 3s on average)
   message: {
     error: {
       message: 'Too many requests, please try again later.',

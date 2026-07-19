@@ -6,6 +6,40 @@ const aiService = require('../services/aiService');
 const eloService = require('../services/eloService');
 const aiBotService = require('../services/aiBotService');
 
+// ─── briefing formatter for PvP sessions ──────────────────────────────────────
+
+/**
+ * Build a system-briefing message shown in chat when a PvP session starts.
+ * Each user gets ONLY their own role's briefing — never the opponent's.
+ * Secret objectives are NEVER included (used only during AI scoring).
+ */
+const formatBriefingMessage = (session, role) => {
+  const isRoleA = role === 'role_a';
+  const roleName = isRoleA ? (session.role_a_name || 'Peran A') : (session.role_b_name || 'Peran B');
+  const opponentName = isRoleA ? (session.role_b_name || 'Peran B') : (session.role_a_name || 'Peran A');
+  const briefing = isRoleA ? session.role_a_briefing : session.role_b_briefing;
+  const difficultyLabels = { beginner: 'Pemula', intermediate: 'Menengah', advanced: 'Lanjutan' };
+  const difficulty = difficultyLabels[session.difficulty] || session.difficulty || '-';
+
+  let text = `📋 **${session.scenario_title}**\n`;
+  text += `Kategori: \`${session.category || '-'}\` · Mode: \`${session.mode === 'duel' ? '⚔️ Duel' : '🤝 Co-op'}\` · Level: \`${difficulty}\``;
+  text += `\n\n---\n\n`;
+  text += `**Peran kamu: ${roleName}**\n\n${briefing}`;
+
+  if (session.has_problem && session.initial_content) {
+    const problem = typeof session.initial_content === 'object'
+      ? session.initial_content.problem
+      : null;
+    if (problem) {
+      text += `\n\n---\n\n**🗂️ Problem:**\n${problem}`;
+    }
+  }
+
+  text += `\n\n---\n\n*Kamu berpasangan dengan user lain yang memainkan peran **${opponentName}** — dia tidak tahu briefing kamu, kamu juga tidak tahu briefing dia. Tetap in-character selama sesi. Semangat!*`;
+
+  return text;
+};
+
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
 /** Fetch session + scenario in one join. Returns null if not found. */
@@ -291,6 +325,27 @@ const registerArenaHandler = (io, socket) => {
           durationSeconds: session.duration_seconds,
           isBotOpponent: isBotSession,
         });
+
+        // ── send private briefing to each user (PvP only) ───────────────────
+        if (!isBotSession) {
+          const briefingA = formatBriefingMessage(session, 'role_a');
+          const briefingB = formatBriefingMessage(session, 'role_b');
+
+          if (session.user_a_id) {
+            io.to(`user:${session.user_a_id}`).emit('arena:briefing', {
+              sessionId,
+              role: 'role_a',
+              text: briefingA,
+            });
+          }
+          if (session.user_b_id) {
+            io.to(`user:${session.user_b_id}`).emit('arena:briefing', {
+              sessionId,
+              role: 'role_b',
+              text: briefingB,
+            });
+          }
+        }
 
         logger.info(`arena:started | session=${sessionId} durationSeconds=${session.duration_seconds}`);
 
