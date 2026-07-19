@@ -43,19 +43,29 @@ const runSeed = async () => {
       const hasProblem = !!(scenario.initial_content && scenario.initial_content.problem);
 
       if (existing) {
-        // Update existing scenario with new fields (workspace, skill_category, has_problem, etc.)
+        // Update existing scenario
         await pool.query(
           `UPDATE scenarios SET
             workspace_type = ?,
             initial_content = ?,
             skill_category = ?,
-            has_problem = ?
+            has_problem = ?,
+            title_id = ?,
+            role_a_name_id = ?,
+            role_b_name_id = ?,
+            role_a_briefing_id = ?,
+            role_b_briefing_id = ?
           WHERE id = ?`,
           [
             scenario.workspace_type || 'chat',
             scenario.initial_content ? JSON.stringify(scenario.initial_content) : null,
             skillCategory,
             hasProblem,
+            scenario.title_id || null,
+            scenario.role_a_name_id || null,
+            scenario.role_b_name_id || null,
+            scenario.role_a_briefing_id || null,
+            scenario.role_b_briefing_id || null,
             existing.id,
           ]
         );
@@ -83,6 +93,11 @@ const runSeed = async () => {
         initial_content: scenario.initial_content ? JSON.stringify(scenario.initial_content) : null,
         skill_category: skillCategory,
         has_problem: hasProblem,
+        title_id: scenario.title_id || null,
+        role_a_name_id: scenario.role_a_name_id || null,
+        role_b_name_id: scenario.role_b_name_id || null,
+        role_a_briefing_id: scenario.role_a_briefing_id || null,
+        role_b_briefing_id: scenario.role_b_briefing_id || null,
       };
 
       await scenarioQueries.insertScenario(scenarioData);

@@ -4,7 +4,12 @@
     "mode": "duel",
     "category": "interview-prep",
     "difficulty": "intermediate",
-    "tags": ["system-design", "interview", "architecture", "scalability"],
+    "tags": [
+      "system-design",
+      "interview",
+      "architecture",
+      "scalability"
+    ],
     "role_a_briefing": "You're interviewing for a Senior Backend Engineer position at a fintech company. The interviewer just asked you to \"Design a URL shortener like bit.ly.\"\n\nYou have 10 minutes to:\n1. Explain your high-level architecture (2 min)\n2. Detail the database schema (2 min)\n3. Discuss how to handle 10,000 concurrent URL shortening requests (3 min)\n4. Answer any follow-up questions (3 min)\n\nKey points to cover:\n- How to generate unique short codes\n- Database choice (SQL vs NoSQL)\n- Caching strategy\n- Rate limiting considerations\n\nRemember: Think out loud. The interviewer wants to see your thought process, not just the answer.",
     "role_a_secret_objective": "Mention at least 2 trade-offs in your design WITHOUT being prompted. Example: 'I chose PostgreSQL for ACID compliance, but it means we sacrifice some write speed compared to NoSQL.'",
     "role_b_briefing": "You're a Senior Engineer interviewing a candidate for a Backend role. You've asked them to design a URL shortener.\n\nListen to their design, then challenge them:\n- Minute 2-3: Ask about database schema specifics: \"What's your primary key? How do you handle redirects efficiently?\"\n- Minute 4-5: Scale challenge: \"Now we need 10,000 writes per second. What changes?\"\n- Minute 6-7: Edge case: \"What happens if two users create short URLs for the same long URL?\"\n- Minute 8-9: Deep dive: \"How would you add analytics? Click counting per URL?\"\n\nEvaluate: system thinking, scalability awareness, communication clarity, handling pressure.",
@@ -17,8 +22,16 @@
       "handling_criticism": 15
     },
     "resource_links": [
-      { "title": "System Design Interview: URL Shortener", "url": "https://www.youtube.com/watch?v=fMZMm_0ZhK4", "type": "video" },
-      { "title": "Designing a URL Shortening Service", "url": "https://www.educative.io/courses/grokking-the-system-design-interview", "type": "course" }
+      {
+        "title": "System Design Interview: URL Shortener",
+        "url": "https://www.youtube.com/watch?v=fMZMm_0ZhK4",
+        "type": "video"
+      },
+      {
+        "title": "Designing a URL Shortening Service",
+        "url": "https://www.educative.io/courses/grokking-the-system-design-interview",
+        "type": "course"
+      }
     ],
     "role_a_name": "Candidate",
     "role_b_name": "Interviewer",
@@ -26,16 +39,26 @@
     "initial_content": {
       "problem": "Design a URL shortener like bit.ly. Draw the high-level architecture including clients, load balancers, web servers, database, and cache layer.",
       "template": "flowchart TB\n    subgraph Clients[Users]\n        U[Browser / Mobile App]\n    end\n\n    subgraph CDN[CDN Layer]\n        CDN_S[Static Assets\n        CloudFront / Fastly]\n    end\n\n    subgraph LB[Load Balancers]\n        LB1[NGINX / HAProxy]\n    end\n\n    subgraph Web[Application Servers]\n        W1[Web Server 1\n        Node.js / Express]\n        W2[Web Server 2\n        Node.js / Express]\n    end\n\n    subgraph Cache[Caching Layer]\n        R[Redis Cluster\n        Hot URLs Cache]\n    end\n\n    subgraph DB[Database Layer]\n        PG[(PostgreSQL\n        URLs + Users)]\n    end\n\n    U --> CDN_S\n    U --> LB1\n    LB1 --> W1\n    LB1 --> W2\n    W1 --> R\n    W2 --> R\n    W1 --> PG\n    W2 --> PG\n\n    %% TODO: Add more details\n    %% - URL generation service\n    %% - Analytics pipeline\n    %% - Rate limiting\n    %% - Backup/DR strategy"
-    }
+    },
+    "title_id": "The Whiteboard Gauntlet",
+    "role_a_name_id": "Kandidat",
+    "role_b_name_id": "Pewawancara",
+    "role_a_briefing_id": "Anda sedang diwawancara untuk posisi Senior Backend Engineer di perusahaan fintech. Pewawancara meminta Anda untuk \"Mendesain URL shortener seperti bit.ly.\"\n\nAnda punya 10 menit untuk:\n1. Menjelaskan arsitektur tingkat tinggi (2 menit)\n2. Merinci skema database (2 menit)\n3. Membahas cara menangani 10.000 permintaan konkuren (3 menit)\n4. Menjawab pertanyaan lanjutan (3 menit)\n\nPoin penting yang harus dicakup:\n- Cara menghasilkan kode pendek unik\n- Pemilihan database (SQL vs NoSQL)\n- Strategi caching\n- Pertimbangan rate limiting\n\nIngat: Bicaralah dengan lantang. Pewawancara ingin melihat proses berpikir Anda, bukan sekadar jawaban.",
+    "role_b_briefing_id": "Anda adalah Senior Engineer yang mewawancarai kandidat untuk posisi Backend. Anda meminta mereka mendesain URL shortener.\n\nDengarkan desain mereka, lalu tantang mereka:\n- Menit 2-3: Tanya tentang spesifik skema database: \"Apa primary key-nya? Bagaimana cara menangani redirect secara efisien?\"\n- Menit 4-5: Tantang skala: \"Sekarang kita butuh 10.000 write per detik. Apa yang berubah?\"\n- Menit 6-7: Kasus batas: \"Bagaimana jika dua user membuat short URL untuk URL panjang yang sama?\"\n- Menit 8-9: Pendalaman: \"Bagaimana cara menambahkan analytics? Pelacakan klik per URL?\"\n\nEvaluasi: pemikiran sistem, kesadaran skalabilitas, kejelasan komunikasi, penanganan tekanan."
   },
   {
     "title": "The Behavioral Trap",
     "mode": "duel",
     "category": "interview-prep",
     "difficulty": "beginner",
-    "tags": ["behavioral-interview", "soft-skills", "self-awareness", "star-method"],
+    "tags": [
+      "behavioral-interview",
+      "soft-skills",
+      "self-awareness",
+      "star-method"
+    ],
     "role_a_briefing": "You're interviewing for a Software Engineer position at a major tech company. The interviewer just asked: \"Tell me about a time you failed.\"\n\nUse the STAR method:\n- Situation: Set the context\n- Task: What was your responsibility?\n- Action: What did you do?\n- Result: What happened? What did you LEARN?\n\nChoose a REAL failure, not a humblebrag. Technical failure is better than generic. Show genuine self-reflection.",
-    "role_a_secret_objective": "Choose a technical failure (missed bug, bad architecture decision, production incident) and end with CONCRETE changes you made afterward. Don't use clich\u00e9 answers like 'I'm a perfectionist' or 'I work too hard.' The interviewer will detect BS.",
+    "role_a_secret_objective": "Choose a technical failure (missed bug, bad architecture decision, production incident) and end with CONCRETE changes you made afterward. Don't use cliché answers like 'I'm a perfectionist' or 'I work too hard.' The interviewer will detect BS.",
     "role_b_briefing": "You're an Engineering Manager interviewing a candidate. You just asked: \"Tell me about a time you failed.\"\n\nYour mental checklist:\n1. Is this a real failure or a disguised humblebrag?\n2. Do they take ownership or blame others?\n3. Is the learning specific and actionable?\n4. Would this person be honest in a post-mortem?\n\nFollow-up questions:\n- \"What specifically did YOU do wrong? Not the team.\"\n- \"Looking back, what was the earliest sign you should have caught?\"\n- \"How has this changed how you work today?\"",
     "role_b_secret_objective": "At minute 7, ask: 'Now tell me about a failure where you DIDN'T realize you were wrong until much later. A blind spot.' This tests deep self-awareness. Most candidates only prepare one story.",
     "ai_criteria": {
@@ -46,18 +69,36 @@
       "communication_clarity": 10
     },
     "resource_links": [
-      { "title": "STAR Method for Behavioral Interviews", "url": "https://www.themuse.com/advice/star-interview-method", "type": "article" },
-      { "title": "How to Answer 'Tell Me About a Failure'", "url": "https://www.indeed.com/career-advice/interviewing/interview-question-tell-me-about-a-time-you-failed", "type": "article" }
+      {
+        "title": "STAR Method for Behavioral Interviews",
+        "url": "https://www.themuse.com/advice/star-interview-method",
+        "type": "article"
+      },
+      {
+        "title": "How to Answer 'Tell Me About a Failure'",
+        "url": "https://www.indeed.com/career-advice/interviewing/interview-question-tell-me-about-a-time-you-failed",
+        "type": "article"
+      }
     ],
     "role_a_name": "Candidate",
-    "role_b_name": "Engineering Manager"
+    "role_b_name": "Engineering Manager",
+    "title_id": "Jebakan Behavioral",
+    "role_a_name_id": "Kandidat",
+    "role_b_name_id": "Engineering Manager",
+    "role_a_briefing_id": "Anda sedang diwawancara untuk posisi Software Engineer di perusahaan teknologi besar. Pewawancara bertanya: \"Ceritakan tentang kegagalan Anda.\"\n\nGunakan metode STAR:\n- Situation: Jelaskan konteksnya\n- Task: Apa tanggung jawab Anda?\n- Action: Apa yang Anda lakukan?\n- Result: Apa hasilnya? Apa yang Anda PELAJARI?\n\nPilih kegagalan NYATA, bukan pamer terselubung. Kegagalan teknis lebih baik dari yang generik. Tunjukkan refleksi diri yang tulus.",
+    "role_b_briefing_id": "Anda adalah Engineering Manager yang mewawancarai kandidat. Anda baru bertanya: \"Ceritakan tentang kegagalan Anda.\"\n\nChecklist mental Anda:\n1. Apakah ini kegagalan nyata atau pamer terselubung?\n2. Apakah mereka mengambil tanggung jawab atau menyalahkan orang lain?\n3. Apakah pembelajarannya spesifik dan dapat ditindaklanjuti?\n4. Akankah orang ini jujur dalam post-mortem?\n\nPertanyaan lanjutan:\n- \"Apa yang secara SPESIFIK Anda lakukan salah? Bukan tim.\"\n- \"Kalau dipikir-pikir, apa tanda awal yang seharusnya Anda tangkap?\"\n- \"Bagaimana ini mengubah cara Anda bekerja sekarang?\""
   },
   {
     "title": "The Portfolio Defense",
     "mode": "duel",
     "category": "interview-prep",
     "difficulty": "advanced",
-    "tags": ["portfolio", "technical-depth", "architecture", "critical-thinking"],
+    "tags": [
+      "portfolio",
+      "technical-depth",
+      "architecture",
+      "critical-thinking"
+    ],
     "role_a_briefing": "You're a Mid-Level Developer interviewing for a Senior role. The interviewer has pulled up your GitHub portfolio and asks: \"Walk me through your most complex project. I want to understand your technical decisions.\"\n\nChoose a project from your experience (or imagine one). Cover:\n1. What problem did it solve? (1 min)\n2. Architecture overview (2 min)\n3. Most challenging technical decision (3 min)\n4. What you'd do differently now (2 min)\n5. Open to questions (2 min)\n\nBe prepared to go deep. They'll challenge your choices.",
     "role_a_secret_objective": "When discussing your most challenging decision, admit at least one thing you got WRONG and explain how you'd fix it. This shows maturity, not weakness. Example: 'I chose MongoDB for flexibility, but we later needed complex joins. I'd use PostgreSQL for the relational parts now.'",
     "role_b_briefing": "You're a Principal Engineer interviewing a candidate for a Senior role. You're looking at their portfolio.\n\nChallenge their technical decisions:\n- \"Why did you choose [their tech]? What alternatives did you consider?\"\n- \"How would this system handle 10x traffic?\"\n- \"What's the weakest part of this architecture? Be honest.\"\n- \"If you had to rebuild this from scratch in 1 week, what would you cut?\"\n\nLook for: depth of understanding, ability to critique their own work, awareness of trade-offs.",
@@ -70,18 +111,35 @@
       "handling_challenge": 10
     },
     "resource_links": [
-      { "title": "How to Present Your Portfolio in Interviews", "url": "https://www.freecodecamp.org/news/how-to-talk-about-your-projects-in-interviews/", "type": "article" },
-      { "title": "Senior Engineer Interview: What Interviewers Look For", "url": "https://staffeng.com/guides/interviewing", "type": "article" }
+      {
+        "title": "How to Present Your Portfolio in Interviews",
+        "url": "https://www.freecodecamp.org/news/how-to-talk-about-your-projects-in-interviews/",
+        "type": "article"
+      },
+      {
+        "title": "Senior Engineer Interview: What Interviewers Look For",
+        "url": "https://staffeng.com/guides/interviewing",
+        "type": "article"
+      }
     ],
     "role_a_name": "Mid-Level Developer",
-    "role_b_name": "Principal Engineer"
+    "role_b_name": "Principal Engineer",
+    "title_id": "Pertahanan Portfolio",
+    "role_a_name_id": "Developer Madya",
+    "role_b_name_id": "Principal Engineer",
+    "role_a_briefing_id": "Anda adalah Developer Madya yang diwawancara untuk posisi Senior. Pewawancara membuka portfolio GitHub Anda dan bertanya: \"Jelaskan proyek Anda yang paling kompleks. Saya ingin memahami keputusan teknis Anda.\"\n\nPilih proyek dari pengalaman Anda (atau bayangkan satu). Cakup:\n1. Masalah apa yang dipecahkan? (1 menit)\n2. Gambaran arsitektur (2 menit)\n3. Keputusan teknis paling menantang (3 menit)\n4. Apa yang akan Anda lakukan berbeda sekarang (2 menit)\n5. Terbuka untuk pertanyaan (2 menit)\n\nBersiaplah untuk mendalam. Mereka akan menantang pilihan Anda.",
+    "role_b_briefing_id": "Anda adalah Principal Engineer yang mewawancarai kandidat untuk posisi Senior. Anda melihat portfolio mereka.\n\nTantang keputusan teknis mereka:\n- \"Mengapa Anda memilih [teknologi mereka]? Alternatif apa yang dipertimbangkan?\"\n- \"Bagaimana sistem ini menangani traffic 10x lipat?\"\n- \"Apa bagian terlemah dari arsitektur ini? Jujurlah.\"\n- \"Jika harus bangun ulang dari awal dalam 1 minggu, apa yang akan Anda potong?\"\n\nCari: kedalaman pemahaman, kemampuan mengkritik karya sendiri, kesadaran akan trade-off."
   },
   {
     "title": "The Technical Presentation",
     "mode": "duel",
     "category": "technical-communication",
     "difficulty": "advanced",
-    "tags": ["presentation", "technical-communication", "audience-awareness"],
+    "tags": [
+      "presentation",
+      "technical-communication",
+      "audience-awareness"
+    ],
     "role_a_briefing": "You have 10 minutes to present a technical topic to a mixed audience: 2 senior engineers, 1 product manager, and 1 junior developer who just joined.\n\nYour topic: \"Why we should migrate from a monolithic architecture to microservices.\"\n\nRequirements:\n- Make it understandable for ALL audience members\n- Include technical depth for seniors without losing the PM and junior\n- Address business value, not just technical benefits\n- Handle interruptions professionally\n\nStart with a 30-second executive summary, then dive in.",
     "role_a_secret_objective": "Use at least one ANALOGY to explain a complex concept. Example: 'A monolith is like a food court where everything shares one kitchen. Microservices are like food trucks - each independent but they need good coordination.' Then check in with the junior dev: 'Does that make sense?'",
     "role_b_briefing": "You're a Senior Engineer in the audience. You're skeptical about microservices because you've seen failed migrations.\n\nThroughout the presentation:\n- Minute 2: Interrupt with a skeptical question: \"What about operational complexity? We're a team of 5.\"\n- Minute 4: Ask about specific technical challenges: \"How do you handle distributed transactions?\"\n- Minute 7: Challenge the business value: \"What's the ROI? Give me numbers, not buzzwords.\"\n- Minute 9: Test audience awareness: \"I think you lost the PM. Can you rephrase that last point?\"\n\nYou're tough but fair. You want to see if they can defend their ideas under pressure.",
@@ -94,18 +152,36 @@
       "presentation_structure": 15
     },
     "resource_links": [
-      { "title": "How to Present Technical Concepts to Mixed Audiences", "url": "https://www.notion.so/blog/presenting-technical-concepts", "type": "article" },
-      { "title": "Monolith vs Microservices: Making the Case", "url": "https://martinfowler.com/articles/break-monolith-into-microservices.html", "type": "article" }
+      {
+        "title": "How to Present Technical Concepts to Mixed Audiences",
+        "url": "https://www.notion.so/blog/presenting-technical-concepts",
+        "type": "article"
+      },
+      {
+        "title": "Monolith vs Microservices: Making the Case",
+        "url": "https://martinfowler.com/articles/break-monolith-into-microservices.html",
+        "type": "article"
+      }
     ],
     "role_a_name": "Presenter",
-    "role_b_name": "Senior Engineer"
+    "role_b_name": "Senior Engineer",
+    "title_id": "Presentasi Teknis",
+    "role_a_name_id": "Presenter",
+    "role_b_name_id": "Senior Engineer",
+    "role_a_briefing_id": "Anda punya 10 menit untuk mempresentasikan topik teknis ke audiens campuran: 2 senior engineer, 1 product manager, dan 1 junior developer yang baru bergabung.\n\nTopik Anda: \"Mengapa kita harus migrasi dari arsitektur monolit ke microservices.\"\n\nPersyaratan:\n- Buat dapat dipahami SEMUA anggota audiens\n- Sertakan kedalaman teknis untuk senior tanpa membuat PM dan junior bingung\n- Bahas nilai bisnis, bukan hanya manfaat teknis\n- Tangani interupsi secara profesional\n\nMulai dengan ringkasan eksekutif 30 detik, lalu masuk lebih dalam.",
+    "role_b_briefing_id": "Anda adalah Senior Engineer di audiens. Anda skeptis tentang microservices karena pernah melihat migrasi yang gagal.\n\nSepanjang presentasi:\n- Menit 2: Interupsi dengan pertanyaan skeptis: \"Bagaimana dengan kompleksitas operasional? Tim kami hanya 5 orang.\"\n- Menit 4: Tanya tentang tantangan teknis spesifik: \"Bagaimana cara menangani transaksi terdistribusi?\"\n- Menit 7: Tantang nilai bisnis: \"Apa ROI-nya? Beri saya angka, bukan kata-kata buzz.\"\n- Menit 9: Uji kesadaran audiens: \"Saya pikir Anda kehilangan PM. Bisakah Anda ulangi poin terakhir?\"\n\nAnda keras tapi adil. Anda ingin melihat apakah mereka bisa mempertahankan ide di bawah tekanan."
   },
   {
     "title": "The Stack Overflow Moment",
     "mode": "duel",
     "category": "technical-communication",
     "difficulty": "beginner",
-    "tags": ["asking-questions", "mentorship", "debugging", "junior-developer"],
+    "tags": [
+      "asking-questions",
+      "mentorship",
+      "debugging",
+      "junior-developer"
+    ],
     "role_a_briefing": "You're a junior dev, 3 months into your first job. You've been stuck on a bug for 4 hours. You need to ask your senior for help, but you're nervous about looking incompetent.\n\nThe bug: You're building a CSV export API. The code errors with \"TypeError: fields.reduce is not a function\" when you try to map the data.\n\nYou've tried: Googling the error, checking Stack Overflow, asking ChatGPT. Nothing worked.\n\nYour task: Approach your senior effectively. Show you've done your homework.",
     "role_a_secret_objective": "Before asking for help, share: (1) The exact error message, (2) 2-3 things you've already tried with links, (3) Your hypothesis about what might be wrong. This shows due diligence and makes you easy to help.",
     "role_b_briefing": "You're a senior dev deep in your own work. A junior approaches you: \"Hey, I'm stuck.\"\n\nYour approach:\n1. First, assess: Have they done basic debugging?\n2. Don't give the answer directly - guide them to find it\n3. Use the Socratic method: ask questions that lead them to the solution\n4. Make this a teaching moment, not just a fix\n\nCommon causes for their error: The data variable might not be an array. They might need Array.isArray() check first.",
@@ -118,8 +194,16 @@
       "mentoring_quality": 15
     },
     "resource_links": [
-      { "title": "How to Ask Good Technical Questions", "url": "https://stackoverflow.com/help/how-to-ask", "type": "article" },
-      { "title": "Rubber Duck Debugging", "url": "https://rubberduckdebugging.com/", "type": "article" }
+      {
+        "title": "How to Ask Good Technical Questions",
+        "url": "https://stackoverflow.com/help/how-to-ask",
+        "type": "article"
+      },
+      {
+        "title": "Rubber Duck Debugging",
+        "url": "https://rubberduckdebugging.com/",
+        "type": "article"
+      }
     ],
     "role_a_name": "Junior Developer",
     "role_b_name": "Senior Developer",
@@ -128,14 +212,24 @@
       "language": "javascript",
       "problem": "The CSV export endpoint is throwing \"TypeError: fields.reduce is not a function\". The API receives an array of field names from the query params and tries to extract matching columns from a CSV dataset.",
       "template": "// routes/export.js\nconst express = require('express');\nconst router = express.Router();\nconst csv = require('csv-parse');\n\n// GET /api/export/csv?fields=name,email,role\n// BUG: TypeError: fields.reduce is not a function\nrouter.get('/csv', async (req, res) => {\n  try {\n    const fields = req.query.fields;\n    // fields comes from query string as: \"name,email,role\"\n    // Expected: ['name', 'email', 'role']\n\n    const data = await loadCsvData();\n\n    const filtered = fields.reduce((acc, field) => {\n      if (data[0] && data[0][field]) {\n        acc.push({ [field]: data[0][field] });\n      }\n      return acc;\n    }, []);\n\n    res.json({ data: filtered });\n  } catch (err) {\n    res.status(500).json({ error: err.message });\n  }\n});\n\nfunction loadCsvData() {\n  // Returns parsed CSV rows\n  return [\n    { name: 'Alice', email: 'alice@co.com', role: 'Engineer' },\n    { name: 'Bob', email: 'bob@co.com', role: 'Designer' },\n  ];\n}\n\nmodule.exports = router;"
-    }
+    },
+    "title_id": "Momen Stack Overflow",
+    "role_a_name_id": "Developer Junior",
+    "role_b_name_id": "Developer Senior",
+    "role_a_briefing_id": "Anda adalah developer junior, 3 bulan di pekerjaan pertama. Anda sudah stuck di bug selama 4 jam. Anda perlu meminta bantuan senior, tapi Anda gugup terlihat tidak kompeten.\n\nBug-nya: Anda membuat API ekspor CSV. Kode error dengan \"TypeError: fields.reduce is not a function\" ketika mencoba memetakan data.\n\nYang sudah Anda coba: Googling error, cek Stack Overflow, tanya ChatGPT. Tidak ada yang berhasil.\n\nTugas Anda: Dekati senior Anda secara efektif. Tunjukkan bahwa Anda sudah melakukan persiapan.",
+    "role_b_briefing_id": "Anda adalah senior developer yang sedang fokus dengan pekerjaan sendiri. Seorang junior mendekati Anda: \"Hei, saya stuck.\"\n\nPendekatan Anda:\n1. Pertama, nilai: Apakah mereka sudah melakukan debugging dasar?\n2. Jangan berikan jawaban langsung - bimbing mereka untuk menemukannya\n3. Gunakan metode Socratic: ajukan pertanyaan yang mengarahkan ke solusi\n4. Jadikan ini momen pembelajaran, bukan sekadar perbaikan\n\nPenyebab umum error mereka: Variabel data mungkin bukan array. Mereka mungkin perlu pengecekan Array.isArray() dulu."
   },
   {
     "title": "The Code Review Conflict",
     "mode": "duel",
     "category": "technical-communication",
     "difficulty": "intermediate",
-    "tags": ["code-review", "feedback", "conflict-resolution", "egoless-programming"],
+    "tags": [
+      "code-review",
+      "feedback",
+      "conflict-resolution",
+      "egoless-programming"
+    ],
     "role_a_briefing": "You just submitted a PR that you're proud of. Clean code, tested, well-documented. But a senior engineer rejected it with: \"This isn't following best practices. Refactor using the Repository pattern.\"\n\nYou feel this is unnecessary. The code works, it's readable, and the Repository pattern would add complexity for no benefit in this case. But the senior has more authority.\n\nYour task: Respond to the code review comment professionally. Defend your approach with technical reasoning, not ego.",
     "role_a_secret_objective": "Acknowledge the senior's concern FIRST before disagreeing. 'I see why you'd suggest the Repository pattern - it does provide better abstraction. However, for this specific use case...' This shows you're collaborative, not combative.",
     "role_b_briefing": "You reviewed a junior's PR and requested they refactor using the Repository pattern. They're pushing back politely.\n\nYour internal thoughts: You suggested Repository pattern because the codebase uses it elsewhere. But honestly, for this simple CRUD endpoint, it might be overkill.\n\nHow to handle this:\n1. Listen to their reasoning\n2. Be willing to admit if you're wrong\n3. Find a middle ground if possible\n4. Remember: code reviews are about code quality, not authority",
@@ -148,18 +242,36 @@
       "code_quality_focus": 15
     },
     "resource_links": [
-      { "title": "How to Give and Receive Code Reviews", "url": "https://google.github.io/eng-practices/review/reviewer/", "type": "article" },
-      { "title": "Egoless Programming", "url": "https://blog.codinghorror.com/the-ten-commandments-of-egoless-programming/", "type": "article" }
+      {
+        "title": "How to Give and Receive Code Reviews",
+        "url": "https://google.github.io/eng-practices/review/reviewer/",
+        "type": "article"
+      },
+      {
+        "title": "Egoless Programming",
+        "url": "https://blog.codinghorror.com/the-ten-commandments-of-egoless-programming/",
+        "type": "article"
+      }
     ],
     "role_a_name": "PR Author",
-    "role_b_name": "Senior Reviewer"
+    "role_b_name": "Senior Reviewer",
+    "title_id": "Konflik Code Review",
+    "role_a_name_id": "Pembuat PR",
+    "role_b_name_id": "Reviewer Senior",
+    "role_a_briefing_id": "Anda mengirim Pull Request untuk fitur baru. Anda sudah bekerja selama 3 minggu. Senior reviewer memberikan komentar: \"Architecture-nya salah. Ini perlu di-refactor total. approach Anda tidak scalable.\"\n\nAnda merasa ini tidak adil - tidak ada yang menyebutkan masalah arsitektur di spec. Tapi reviewer adalah senior yang lebih berpengalaman.\n\nTugas Anda: Pertahankan PR Anda tanpa terlihat defensif. Cari kompromi atau argumen yang kuat.",
+    "role_b_briefing_id": "Anda me-review PR dari developer yang lebih junior. PR ini untuk fitur baru yang cukup besar. Setelah membaca, Anda melihat masalah arsitektur fundamental.\n\nPR ini butuh refactor besar. Tapi Anda tahu penulisnya sudah kerja 3 minggu.\n\nPendekatan Anda:\n1. Jelaskan MASALAH arsitekturnya, bukan hanya menyalahkan\n2. Beri alternatif konkret\n3. Tawarkan untuk pair programming jika perlu\n4. Jaga agar penulisnya tetap termotivasi\n\nTujuannya: kode yang lebih baik DAN developer yang lebih baik."
   },
   {
     "title": "The Daily Standup Disaster",
     "mode": "duel",
     "category": "technical-communication",
     "difficulty": "beginner",
-    "tags": ["standup", "agile", "status-reporting", "transparency"],
+    "tags": [
+      "standup",
+      "agile",
+      "status-reporting",
+      "transparency"
+    ],
     "role_a_briefing": "It's daily standup. You've been stuck on the same task for 3 days that was estimated at 1 day. Everyone's giving their updates. It's your turn soon.\n\nThe reality: You underestimated the complexity. There's a legacy code dependency you didn't know about. You're embarrassed and don't want to look bad in front of the team.\n\nYour task: Give an honest, professional standup update that:\n- Acknowledges the delay\n- Explains the reason without making excuses\n- States what you need to move forward\n- Doesn't throw anyone under the bus",
     "role_a_secret_objective": "Use the 'Situation-Behavior-Impact-Next Steps' framework. End with a specific ask: 'I need 30 minutes with someone who knows the legacy auth module.' This turns a problem into an action item.",
     "role_b_briefing": "You're the Scrum Master. You notice a team member has been stuck on the same task for 3 days. It's their turn to speak in standup.\n\nYour goals:\n1. Create a safe space for honesty\n2. Help unblock them without micromanaging\n3. Determine if this impacts the sprint goal\n4. Protect the team's psychological safety\n\nHow you respond sets the tone for whether people admit problems early or hide them.",
@@ -172,18 +284,36 @@
       "psychological_safety": 15
     },
     "resource_links": [
-      { "title": "How to Give Effective Standup Updates", "url": "https://www.atlassian.com/agile/scrum/standups", "type": "article" },
-      { "title": "Psychological Safety in Engineering Teams", "url": "https://rework.withgoogle.com/guides/understanding-team-effectiveness/steps/foster-psychological-safety/", "type": "article" }
+      {
+        "title": "How to Give Effective Standup Updates",
+        "url": "https://www.atlassian.com/agile/scrum/standups",
+        "type": "article"
+      },
+      {
+        "title": "Psychological Safety in Engineering Teams",
+        "url": "https://rework.withgoogle.com/guides/understanding-team-effectiveness/steps/foster-psychological-safety/",
+        "type": "article"
+      }
     ],
     "role_a_name": "Team Member",
-    "role_b_name": "Scrum Master"
+    "role_b_name": "Scrum Master",
+    "title_id": "Bencana Daily Standup",
+    "role_a_name_id": "Anggota Tim",
+    "role_b_name_id": "Scrum Master",
+    "role_a_briefing_id": "Anda anggota tim di daily standup. Giliran Anda untuk update, tapi Anda tidak menyelesaikan tugas kemarin karena ada bug tak terduga.\n\nAnda juga harus memberi tahu bahwa Anda perlu extend deadline 2 hari. Scrum Master Anda terkenal strict dengan deadline.\n\nTugas Anda: Komunikasikan keterlambatan secara profesional tanpa terlihat sebagai penghambat. Ambil tanggung jawab tapi juga tunjukkan solusi.",
+    "role_b_briefing_id": "Anda adalah Scrum Master. Tim berjalan di daily standup ketika seorang anggota mulai menjelaskan mengapa mereka tidak menyelesaikan tugas.\n\nMereka bilang ada bug tak terduga dan perlu deadline tambahan. Ini sudah sprint ke-3 berturut-turut ada anggota yang molor.\n\nTugas Anda: Tangani situasi ini tanpa mendemoralisasi tim. Cari akar masalah - apakah estimasi terlalu agresif? Ada blocker? Atau skill gap?\n\nEvaluasi: Apakah mereka pemilik masalah yang baik? Apakah mereka punya solusi atau hanya mencari perpanjangan?"
   },
   {
     "title": "The 2AM Incident",
     "mode": "coop",
     "category": "debugging",
     "difficulty": "advanced",
-    "tags": ["incident-response", "production-debugging", "devops", "collaboration"],
+    "tags": [
+      "incident-response",
+      "production-debugging",
+      "devops",
+      "collaboration"
+    ],
     "role_a_briefing": "It's 2 AM. PagerDuty alerts: \"API response time > 10 seconds. Error rate 45%.\"\n\nYou check the logs and find:\n- \"FATAL: database connection pool exhausted\"\n- \"WARNING: slow query detected: SELECT * FROM orders WHERE status='pending' JOIN order_items... JOIN products... -- no LIMIT clause, returning 2.3 million rows\"\n\nBut you DON'T have direct access to the production database (company policy). Your partner (DevOps) has access.\n\nTogether, you must:\n1. Identify the root cause\n2. Decide immediate action: rollback? fix query? scale DB?\n3. Write a 3-line incident report",
     "role_a_secret_objective": "Ask your DevOps partner: 'Was there a deployment recently? What time? Who deployed? Any schema changes?' Often, incidents follow deployments. If they find one, correlate it with the incident timeline.",
     "role_b_briefing": "It's 2 AM. You're on-call with a backend engineer. Production is on fire.\n\nWhat you see on your dashboards:\n- DB CPU spike to 94% starting at 1:47 AM\n- Connection pool maxed (500/500)\n- A deployment was triggered at 1:45 AM by user \"agung.p\" with commit message: \"optimize query + add new reporting feature\"\n- Rollback is possible but takes 15 minutes (database migration already ran)\n\nYou must collaborate with the backend engineer to solve this. You have the production access they need.",
@@ -196,8 +326,16 @@
       "blameless_culture": 10
     },
     "resource_links": [
-      { "title": "Incident Management for Engineering Teams", "url": "https://www.atlassian.com/incident-management", "type": "article" },
-      { "title": "Writing Good Incident Reports", "url": "https://sre.google/sre/book/postmortem-culture/", "type": "article" }
+      {
+        "title": "Incident Management for Engineering Teams",
+        "url": "https://www.atlassian.com/incident-management",
+        "type": "article"
+      },
+      {
+        "title": "Writing Good Incident Reports",
+        "url": "https://sre.google/sre/book/postmortem-culture/",
+        "type": "article"
+      }
     ],
     "role_a_name": "Backend Engineer",
     "role_b_name": "On-Call Partner",
@@ -206,17 +344,27 @@
       "language": "javascript",
       "problem": "Production API endpoint is crashing due to an unbounded database query. The code below is the offending route handler. Identify the root cause and fix it.",
       "template": "// routes/orders.js\nconst express = require('express');\nconst router = express.Router();\nconst db = require('../db');\n\n// GET /api/orders/pending\n// Returns all pending orders with their items and product details\n// BUG: This endpoint is causing DB connection pool exhaustion\nrouter.get('/pending', async (req, res) => {\n  try {\n    const orders = await db.query(`\n      SELECT *\n      FROM orders o\n      JOIN order_items oi ON o.id = oi.order_id\n      JOIN products p ON oi.product_id = p.id\n      WHERE o.status = 'pending'\n    `);\n\n    res.json({ data: orders, count: orders.length });\n  } catch (err) {\n    res.status(500).json({ error: err.message });\n  }\n});\n\nmodule.exports = router;"
-    }
+    },
+    "title_id": "Insiden Jam 2 Pagi",
+    "role_a_name_id": "Backend Engineer",
+    "role_b_name_id": "Partner Jaga",
+    "role_a_briefing_id": "Jam 2 pagi. PagerDuty alert: \"Response time API > 10 detik. Error rate 45%.\"\n\nAnda cek log dan menemukan:\n- \"FATAL: database connection pool exhausted\"\n- \"WARNING: slow query terdeteksi: SELECT * FROM orders WHERE status='pending' JOIN order_items... JOIN products... -- tanpa LIMIT, mengembalikan 2,3 juta baris\"\n\nTapi Anda TIDAK punya akses langsung ke database produksi (kebijakan perusahaan). Partner Anda (DevOps) yang punya akses.\n\nBersama, Anda harus:\n1. Identifikasi akar masalah\n2. Putuskan tindakan segera: rollback? perbaiki query? scale DB?\n3. Tulis laporan insiden 3 baris",
+    "role_b_briefing_id": "Jam 2 pagi. Anda jaga bersama backend engineer. Produksi sedang terbakar.\n\nYang Anda lihat di dashboard:\n- CPU DB spike ke 94% mulai jam 1:47 AM\n- Connection pool penuh (500/500)\n- Deployment dilakukan jam 1:45 AM oleh user \"agung.p\" dengan pesan commit: \"optimasi query + tambah fitur reporting baru\"\n- Rollback mungkin tapi butuh 15 menit (migrasi database sudah jalan)\n\nAnda harus berkolaborasi dengan backend engineer untuk menyelesaikan ini. Anda punya akses produksi yang mereka butuhkan."
   },
   {
     "title": "The Memory Leak Hunt",
     "mode": "coop",
     "category": "debugging",
     "difficulty": "intermediate",
-    "tags": ["memory-leak", "nodejs", "performance", "collaboration"],
+    "tags": [
+      "memory-leak",
+      "nodejs",
+      "performance",
+      "collaboration"
+    ],
     "role_a_briefing": "Your Node.js application restarts itself every 2 hours in production. Logs show: \"FATAL ERROR: JavaScript heap out of memory.\"\n\nYou have access to the codebase. Your partner (DevOps) has access to server metrics.\n\nLooking at the code, you notice:\n- A global variable `let cache = {}` in `productService.js`\n- Every API request adds data to this cache\n- Nothing ever removes data from it\n- Each entry is ~5MB (cached database query results)\n\nTogether, you must:\n1. Identify the memory leak source\n2. Propose a fix: clear cache periodically? Use Redis? Use LRU cache?\n3. Write a 3-line Root Cause Analysis",
     "role_a_secret_objective": "Discuss WHY Redis wasn't used initially: budget constraints? complexity? Then propose a phased approach: 'Quick fix: add cache size limit with LRU eviction in code. Long term: migrate to Redis when we have budget next quarter.'",
-    "role_b_briefing": "Your monitoring shows:\n- Memory: 256MB \u2192 1.8GB over 2 hours (linear growth)\n- Garbage collection frequency increasing but getting less effective\n- Heap dump shows: `productService.cache` = 1.4GB\n\nCompany context: Infrastructure budget is tight. Redis managed service costs $50/month minimum. Management may reject that cost.\n\nCollaborate with the backend engineer to find a solution that works within constraints.",
+    "role_b_briefing": "Your monitoring shows:\n- Memory: 256MB → 1.8GB over 2 hours (linear growth)\n- Garbage collection frequency increasing but getting less effective\n- Heap dump shows: `productService.cache` = 1.4GB\n\nCompany context: Infrastructure budget is tight. Redis managed service costs $50/month minimum. Management may reject that cost.\n\nCollaborate with the backend engineer to find a solution that works within constraints.",
     "role_b_secret_objective": "Suggest: 'What if we run Redis open-source on the same server for now? Not ideal for HA, but it solves the memory leak and costs $0. We can upgrade to managed Redis when we prove the need.' Show creative problem-solving within constraints.",
     "ai_criteria": {
       "diagnosis_accuracy": 25,
@@ -226,8 +374,16 @@
       "rca_clarity": 10
     },
     "resource_links": [
-      { "title": "Node.js Memory Leak Detection", "url": "https://nodejs.org/en/docs/guides/simple-profiling/", "type": "article" },
-      { "title": "Understanding JavaScript Memory Management", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Memory_Management", "type": "article" }
+      {
+        "title": "Node.js Memory Leak Detection",
+        "url": "https://nodejs.org/en/docs/guides/simple-profiling/",
+        "type": "article"
+      },
+      {
+        "title": "Understanding JavaScript Memory Management",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Memory_Management",
+        "type": "article"
+      }
     ],
     "role_a_name": "Node.js Dev",
     "role_b_name": "Monitoring Engineer",
@@ -236,14 +392,24 @@
       "language": "javascript",
       "problem": "The application crashes every 2 hours with a heap out-of-memory error. The cache in productService.js is growing unbounded. Fix the memory leak.",
       "template": "// services/productService.js\nconst db = require('../db');\n\n// TODO: This cache grows indefinitely!\nconst cache = {};\n\nasync function getProductDetails(productId) {\n  if (cache[productId]) {\n    console.log('[CACHE HIT]', productId);\n    return cache[productId];\n  }\n\n  console.log('[CACHE MISS] Fetching from DB:', productId);\n  const product = await db.query(\n    'SELECT * FROM products WHERE id = ?',\n    [productId]\n  );\n\n  // Each product object is ~5MB due to embedded images/reviews\n  cache[productId] = product;\n  return product;\n}\n\n// BONUS: Add a function to clear stale cache entries\n// function clearCache() { ... }\n\nmodule.exports = { getProductDetails };"
-    }
+    },
+    "title_id": "Perburuan Memory Leak",
+    "role_a_name_id": "Developer Node.js",
+    "role_b_name_id": "Monitoring Engineer",
+    "role_a_briefing_id": "Aplikasi Node.js Anda di produksi mulai lambat setelah 3-4 jam berjalan. Memory usage naik terus sampai 2GB lalu crash. Restart server membantu... sebentar.\n\nTim Anda sudah 2 hari mencari penyebabnya. Anda curiga ada memory leak di suatu tempat.\n\nYang Anda tahu:\n- Service ini adalah worker yang proses antrean job\n- Job-nya berupa HTTP call ke API eksternal\n- Masalah mulai muncul setelah deploy library HTTP client versi baru\n\nTugas Anda: Investigasi dengan partner, temukan sumber leak, dan perbaiki.",
+    "role_b_briefing_id": "Anda adalah Monitoring Engineer. Aplikasi Node.js di produksi crash setiap 3-4 jam karena memory habis.\n\nData dari dashboard Anda:\n- Heap usage naik linear dari 200MB ke 1.8GB dalam 3 jam\n- GC pause meningkat dari 5ms menjadi 800ms\n- Number of open handles: 12.000 (normal: 50-100)\n- Job queue length: 45.000 (normal: < 100)\n\nAnda curiga ada koneksi HTTP yang tidak ditutup dengan benar.\n\nTugas Anda: Kolaborasi dengan developer Node.js untuk lacak sumber leak."
   },
   {
     "title": "The Race Condition",
     "mode": "coop",
     "category": "debugging",
     "difficulty": "advanced",
-    "tags": ["race-condition", "concurrency", "database", "collaboration"],
+    "tags": [
+      "race-condition",
+      "concurrency",
+      "database",
+      "collaboration"
+    ],
     "role_a_briefing": "Users are reporting duplicate orders. They click \"Buy\" once, but sometimes get charged twice.\n\nYou check the code and find the race condition. Your partner (Database Engineer) can help fix this at the DB level.\n\nTogether, fix the bug at both application and database levels.",
     "role_a_secret_objective": "Propose BOTH application-level fix (idempotency key from frontend) AND database-level fix (unique constraint). Then discuss trade-offs: 'App-level fix is faster to deploy but doesn't protect against API retries. DB constraint is bulletproof but requires migration.'",
     "role_b_briefing": "There's a race condition causing duplicate orders. The backend engineer found the problematic code.\n\nYou can fix this at the database level:\n- Option 1: Add UNIQUE constraint on (user_id, product_id) where status = 'pending'\n- Option 2: Use SELECT FOR UPDATE to lock the row\n- Option 3: Implement optimistic locking with version numbers\n\nEach has trade-offs in performance, complexity, and reliability. Help choose the right approach.",
@@ -256,8 +422,16 @@
       "edge_case_thinking": 10
     },
     "resource_links": [
-      { "title": "Race Conditions in Web Applications", "url": "https://www.postgresql.org/docs/current/transaction-iso.html", "type": "article" },
-      { "title": "Idempotency in API Design", "url": "https://stripe.com/docs/idempotency", "type": "article" }
+      {
+        "title": "Race Conditions in Web Applications",
+        "url": "https://www.postgresql.org/docs/current/transaction-iso.html",
+        "type": "article"
+      },
+      {
+        "title": "Idempotency in API Design",
+        "url": "https://stripe.com/docs/idempotency",
+        "type": "article"
+      }
     ],
     "role_a_name": "Frontend Engineer",
     "role_b_name": "Backend Engineer",
@@ -266,14 +440,24 @@
       "language": "javascript",
       "problem": "Users are getting charged twice when they click \"Buy\" rapidly. The checkout endpoint has a race condition. Fix both the application code and propose a database-level solution.",
       "template": "// routes/checkout.js\nconst express = require('express');\nconst router = express.Router();\nconst db = require('../db');\nconst payment = require('../services/payment');\n\n// POST /api/checkout/buy\n// BUG: If user clicks twice quickly, both requests pass the check\n// before either creates the order. Duplicate charges! \nrouter.post('/buy', async (req, res) => {\n  const { userId, productId } = req.body;\n\n  // Step 1: Check if pending order exists\n  const existing = await db.query(\n    'SELECT * FROM orders WHERE user_id = ? AND product_id = ? AND status = ?',\n    [userId, productId, 'pending']\n  );\n\n  if (existing.length === 0) {\n    // Step 2: Create order\n    await db.query(\n      'INSERT INTO orders (user_id, product_id, status) VALUES (?, ?, ?)',\n      [userId, productId, 'pending']\n    );\n\n    // Step 3: Charge payment\n    await payment.charge(userId, productId);\n\n    // Step 4: Update status\n    await db.query(\n      'UPDATE orders SET status = ? WHERE user_id = ? AND product_id = ? AND status = ?',\n      ['completed', userId, productId, 'pending']\n    );\n\n    res.json({ success: true });\n  } else {\n    res.json({ success: true, message: 'Order already exists' });\n  }\n});\n\nmodule.exports = router;"
-    }
+    },
+    "title_id": "Kondisi Race",
+    "role_a_name_id": "Frontend Engineer",
+    "role_b_name_id": "Backend Engineer",
+    "role_a_briefing_id": "Anda adalah Frontend Engineer. Ada bug aneh di aplikasi React: kadang user melihat data user LAIN selama 1-2 detik sebelum data mereka muncul. Kejadiannya random, susah di-repro.\n\nTim backend bilang bukan masalah mereka. Tapi Anda curiga ada race condition di API.\n\nTugas Anda: Debug dan komunikasi dengan backend engineer. Cari tahu apakah ini frontend, backend, atau arsitektur.",
+    "role_b_briefing_id": "Anda adalah Backend Engineer. Frontend engineer melaporkan bug aneh: kadang user melihat data user lain sebelum data mereka muncul. Frontend bilang ini pasti backend.\n\nAnda curiga frontend yang salah caching. Tapi ketika cek log backend, tidak ada yang aneh.\n\nTapi Anda mau bantu debugging. Bisa jadi:\n- Race condition di endpoint API\n- Masalah di shared cache (Redis)\n- Atau memang bug frontend\n\nTugas Anda: Debug bersama dan temukan akar masalah."
   },
   {
     "title": "The Impossible Deadline",
     "mode": "duel",
     "category": "stakeholder-management",
     "difficulty": "intermediate",
-    "tags": ["deadline", "product-manager", "expectation-management", "transparency"],
+    "tags": [
+      "deadline",
+      "product-manager",
+      "expectation-management",
+      "transparency"
+    ],
     "role_a_briefing": "You're a frontend developer at an edtech startup. Sprint review is tomorrow at 9 AM. The \"dashboard analytics\" feature you've been working on for 2 weeks isn't done.\n\nProblem: The charting library you chose (Recharts) doesn't support real-time data streaming. You discovered this at 4 PM today.\n\nYour Product Manager just messaged: \"How's the dashboard? Demo to investors tomorrow!\"\n\nYou must:\n1. Be honest about the situation\n2. Present alternatives: scope down? switch library? postpone?\n3. Manage expectations without looking incompetent",
     "role_a_secret_objective": "Use the 'Shit Sandwich' technique: (1) Good news first - what IS working, (2) The bad news - what's blocked, (3) Solutions - what you propose. End with: 'I can have a simplified version ready by tonight that still shows the key metrics.'",
     "role_b_briefing": "You're a PM. The CEO and investors are coming tomorrow at 9 AM to see the dashboard. A developer messages you: \"Need to talk about the dashboard.\"\n\nYou have a bad feeling. But this developer is one of your best.\n\nYour goals:\n1. Get an honest picture of where things stand\n2. Find a solution that works for tomorrow's demo\n3. Don't escalate to CEO unless absolutely necessary\n4. Protect the developer from burnout",
@@ -286,18 +470,36 @@
       "composure_under_pressure": 10
     },
     "resource_links": [
-      { "title": "Managing Up: How to Communicate with Stakeholders", "url": "https://www.atlassian.com/work-management/project-management/managing-up", "type": "article" },
-      { "title": "How to Say No to Unrealistic Deadlines", "url": "https://www.indeed.com/career-advice/career-development/how-to-say-no-to-unrealistic-deadlines", "type": "article" }
+      {
+        "title": "Managing Up: How to Communicate with Stakeholders",
+        "url": "https://www.atlassian.com/work-management/project-management/managing-up",
+        "type": "article"
+      },
+      {
+        "title": "How to Say No to Unrealistic Deadlines",
+        "url": "https://www.indeed.com/career-advice/career-development/how-to-say-no-to-unrealistic-deadlines",
+        "type": "article"
+      }
     ],
     "role_a_name": "Frontend Developer",
-    "role_b_name": "Product Manager"
+    "role_b_name": "Product Manager",
+    "title_id": "Deadline Mustahil",
+    "role_a_name_id": "Frontend Developer",
+    "role_b_name_id": "Product Manager",
+    "role_a_briefing_id": "Anda adalah Frontend Developer. Product Manager memberi deadline: fitur baru harus selesai dalam 2 minggu. Estimasi realistis Anda: 5 minggu. Tim Anda kekurangan 1 orang karena baru mengundurkan diri.\n\nPM bilang: \"Ini sudah janji ke CEO. Tidak bisa mundur.\"\n\nTugas Anda: Negosiasi dengan PM tanpa terlihat malas atau tidak mampu. Cari solusi win-win.",
+    "role_b_briefing_id": "Anda adalah Product Manager. Anda sudah janji ke CEO bahwa fitur baru akan rilis dalam 2 minggu. Tapi developer Anda bilang estimasi realistis 5 minggu.\n\nAnda stuck: CEO sudah janji ke klien besar. Tapi developer Anda terlihat kelelahan.\n\nTugas Anda: Negosiasi dengan developer. Cari jalan tengah. Tim sedang kekurangan orang, Anda tahu itu."
   },
   {
     "title": "The Scope Creep",
     "mode": "duel",
     "category": "stakeholder-management",
     "difficulty": "beginner",
-    "tags": ["freelance", "client-management", "scope-creep", "negotiation"],
+    "tags": [
+      "freelance",
+      "client-management",
+      "scope-creep",
+      "negotiation"
+    ],
     "role_a_briefing": "You're a freelance developer. Fixed-price project: Company profile website, 5 pages (Home, About, Services, Portfolio, Contact). Price: Rp 15 million. Timeline: 4 weeks.\n\nClient just messaged: \"Can you add a blog, an admin panel, and Instagram feed integration? It's still related to the website. Should be easy right?\"\n\nReality: That's 3-4 weeks of additional work. You have another project starting next week.\n\nYour task: Respond professionally. Offer options without losing the client.",
     "role_a_secret_objective": "Open with empathy before logic: 'I totally understand why you'd want a blog and Instagram integration. It'll really help your SEO and engagement.' Then explain the scope impact and offer 3 options: (1) Change request at additional cost, (2) Phase 2 after this project, (3) Swap out an existing feature.",
     "role_b_briefing": "You hired a freelancer for your company website. Project is going well, you're happy so far.\n\nYou realized you should have a blog and Instagram feed to look more professional. You think it's a \"small addition\" because \"WordPress has a blog feature, just turn it on.\"\n\nYou're not technical. You genuinely don't understand why \"small changes\" take so long.\n\nYour tone: Friendly but persistent. You want value for money. You're not trying to be difficult, just uninformed.",
@@ -310,18 +512,37 @@
       "relationship_preservation": 15
     },
     "resource_links": [
-      { "title": "How to Handle Scope Creep as a Freelancer", "url": "https://www.freecodecamp.org/news/how-to-handle-scope-creep/", "type": "article" },
-      { "title": "Writing Good Freelance Contracts", "url": "https://www.and.co/freelance-contract", "type": "article" }
+      {
+        "title": "How to Handle Scope Creep as a Freelancer",
+        "url": "https://www.freecodecamp.org/news/how-to-handle-scope-creep/",
+        "type": "article"
+      },
+      {
+        "title": "Writing Good Freelance Contracts",
+        "url": "https://www.and.co/freelance-contract",
+        "type": "article"
+      }
     ],
     "role_a_name": "Freelancer",
-    "role_b_name": "Client"
+    "role_b_name": "Client",
+    "title_id": "Scope Creep",
+    "role_a_name_id": "Freelancer",
+    "role_b_name_id": "Klien",
+    "role_a_briefing_id": "Anda adalah freelancer yang sedang ngerjain project website untuk klien. Di kontrak: website company profile dengan 5 halaman.\n\nHari ini, klien minta tambahan: \"Oh, bisa tambah fitur chat sama payment gateway? Biasanya dikit aja kan?\"\n\nIni sudah ke-4 kalinya mereka minta tambahan tanpa mau bayar lebih. Project sudah molor 2 minggu.\n\nTugas Anda: Komunikasikan scope creep secara profesional tanpa merusak hubungan.",
+    "role_b_briefing_id": "Anda adalah klien yang pekerjakan freelancer untuk buat website company profile. Website sudah 80% jadi, hasilnya bagus.\n\nAnda pikir: \"Mungkin bisa tambah fitur lain ya, gratis?\" Lumayan kan.\n\nTugas Anda: Dapatkan tambahan fitur sebanyak mungkin tanpa bayar lebih. Tapi jangan sampai freelancernya pergi."
   },
   {
     "title": "The Pivot Meeting",
     "mode": "coop",
     "category": "stakeholder-management",
     "difficulty": "advanced",
-    "tags": ["startup", "pivot", "cto", "technical-assessment", "collaboration"],
+    "tags": [
+      "startup",
+      "pivot",
+      "cto",
+      "technical-assessment",
+      "collaboration"
+    ],
     "role_a_briefing": "You're the CTO of a startup. The CEO just announced: \"We're pivoting. Instead of B2B SaaS, we're going B2C marketplace. I need a technical assessment in 10 minutes.\"\n\nYou and your Lead Engineer must:\n1. Quickly assess the technical impact\n2. Estimate timeline: how long to rebuild?\n3. Identify the biggest risks\n4. Present a phased approach\n\nCurrent stack: React frontend, Node.js backend, PostgreSQL. Current product: B2B inventory management. New direction: Consumer marketplace like Tokopedia.",
     "role_a_secret_objective": "Frame technical concerns in BUSINESS terms. Don't say 'We need to rebuild the database schema.' Say 'The current data model is designed for 100 business users. For 100,000 consumers, we'd risk data corruption and slow load times. We need 6 weeks to redesign.' Always connect tech to business risk.",
     "role_b_briefing": "The CTO just told you about the pivot. You're shocked. You've been building the current product for 18 months.\n\nYou need to help the CTO assess:\n- What can we reuse? (auth system? payment integration?)\n- What must be rebuilt? (entire frontend? recommendation engine?)\n- Realistic timeline (not optimistic, not pessimistic)\n- What's the riskiest part?\n\nYou're concerned but professional. You need to balance honesty with support.",
@@ -334,18 +555,36 @@
       "collaboration_quality": 15
     },
     "resource_links": [
-      { "title": "Technical Due Diligence for Pivots", "url": "https://martinfowler.com/articles/big-ball-of-mud.html", "type": "article" },
-      { "title": "How to Estimate Software Projects Realistically", "url": "https://basecamp.com/shapeup", "type": "article" }
+      {
+        "title": "Technical Due Diligence for Pivots",
+        "url": "https://martinfowler.com/articles/big-ball-of-mud.html",
+        "type": "article"
+      },
+      {
+        "title": "How to Estimate Software Projects Realistically",
+        "url": "https://basecamp.com/shapeup",
+        "type": "article"
+      }
     ],
     "role_a_name": "CTO",
-    "role_b_name": "CEO / Co-Founder"
+    "role_b_name": "CEO / Co-Founder",
+    "title_id": "Rapat Pivot",
+    "role_a_name_id": "CTO",
+    "role_b_name_id": "CEO / Co-Founder",
+    "role_a_briefing_id": "Startup Anda sudah 18 bulan. Produk pertama gagal di pasar. Cash tinggal 3 bulan. Tim kecil (6 orang).\n\nAnda sebagai CTO harus presentasi ke CEO/co-founder: \"Kita harus pivot. Produk baru: internal tool untuk logistik UKM.\"\n\nAnda harus meyakinkan CEO yang masih terikat secara emosional dengan produk pertama. Tapi data berbicara lain.\n\nTugas Anda: Buat argumen berbasis data untuk pivot.",
+    "role_b_briefing_id": "Anda adalah CEO dan co-founder. Startup Anda sudah 18 bulan dengan produk pertama yang gagal di pasar. Cash tinggal 3 bulan.\n\nCTO Anda mau rapat dan bilang harus pivot ke produk baru: internal tool untuk logistik UKM.\n\nAnda masih percaya produk pertama bisa diperbaiki. Anda investasi 18 bulan jiwa ke produk ini.\n\nTugas Anda: Evaluasi argumen CTO secara kritis. Jangan gampang setuju, jangan defensif."
   },
   {
     "title": "The Salary Negotiation",
     "mode": "duel",
     "category": "negotiation",
     "difficulty": "intermediate",
-    "tags": ["salary", "negotiation", "competing-offer", "hr"],
+    "tags": [
+      "salary",
+      "negotiation",
+      "competing-offer",
+      "hr"
+    ],
     "role_a_briefing": "You have a job offer from Company A: Rp 18 million/month. You've been interviewing with Company B (your preferred company). They just offered Rp 15 million.\n\nYou want to negotiate with Company B without losing the offer. You need to:\n1. Signal you have a competing offer (without being aggressive)\n2. Explain why you're worth more (skills, experience, market rate)\n3. Be prepared to walk away if needed\n4. But actually want to join Company B\n\nCurrent market rate for your experience: Rp 17-22 million.",
     "role_a_secret_objective": "Use the 'Anchoring + Evidence' technique. Start with: 'Based on my research on Glassdoor and conversations with peers, the market rate for this role is 17-22 million. My competing offer is 18. I'd prefer to join you. Is there flexibility?' This is data-driven, not emotional.",
     "role_b_briefing": "You're an HR Manager. You offered a candidate Rp 15 million. They're negotiating.\n\nYour constraints:\n- Budget for this role: Rp 14-17 million\n- You can go to 17 million with VP approval\n- You really want this candidate - they're the best you've seen\n- But you need to follow process\n\nYour goals: Get the candidate at the best price, but don't lose them over a few million rupiah.",
@@ -358,18 +597,36 @@
       "closing_skill": 20
     },
     "resource_links": [
-      { "title": "Salary Negotiation for Software Engineers", "url": "https://www.levels.fyi/blog/salary-negotiation.html", "type": "article" },
-      { "title": "BATNA: Best Alternative to Negotiated Agreement", "url": "https://www.pon.harvard.edu/daily/batna/", "type": "article" }
+      {
+        "title": "Salary Negotiation for Software Engineers",
+        "url": "https://www.levels.fyi/blog/salary-negotiation.html",
+        "type": "article"
+      },
+      {
+        "title": "BATNA: Best Alternative to Negotiated Agreement",
+        "url": "https://www.pon.harvard.edu/daily/batna/",
+        "type": "article"
+      }
     ],
     "role_a_name": "Candidate",
-    "role_b_name": "HR Manager"
+    "role_b_name": "HR Manager",
+    "title_id": "Negosiasi Gaji",
+    "role_a_name_id": "Kandidat",
+    "role_b_name_id": "HR Manager",
+    "role_a_briefing_id": "Anda dapat offer kerja dari perusahaan impian. Gaji yang ditawarkan: Rp 15 juta/bulan. Ekspektasi Anda: Rp 20 juta. Rata-rata pasar untuk posisi ini: Rp 18-22 juta.\n\nAnda punya offer lain dari perusahaan B: Rp 17 juta (tapi kurang menarik).\n\nTugas Anda: Negosiasi gaji secara profesional. Jangan sampai offer dicabut, tapi jangan juga dijual murah.",
+    "role_b_briefing_id": "Anda adalah HR Manager di perusahaan teknologi. Anda baru saja memberikan offer ke kandidat bagus: Rp 15 juta/bulan.\n\nBudget untuk posisi ini: maksimal Rp 19 juta. Kandidat lain yang hampir sama bagusnya: Rp 13 juta.\n\nCFO bilang: \"Jangan overpay. Kita bisa ambil kandidat lain.\"\n\nTugas Anda: Dapatkan kandidat terbaik dengan harga sewajarnya. Jangan overbudget."
   },
   {
     "title": "The Promotion Pitch",
     "mode": "duel",
     "category": "career-growth",
     "difficulty": "intermediate",
-    "tags": ["promotion", "performance-review", "self-advocacy", "manager"],
+    "tags": [
+      "promotion",
+      "performance-review",
+      "self-advocacy",
+      "manager"
+    ],
     "role_a_briefing": "You've been at the company for 2 years as a Junior Developer. You believe you're ready for Senior:\n- You handle 3 projects independently\n- You mentor 2 junior developers\n- Other teams ask for your architecture advice\n- Your title still says \"Junior Software Engineer\"\n- Your salary is below market for Senior\n\nToday is your 1-on-1 with your manager. You need to make your case for promotion.",
     "role_a_secret_objective": "Use IMPACT METRICS, not tenure. Don't say 'I've been here 2 years.' Say: 'Projects I led generated Rp 500M in revenue. I reduced onboarding time for new developers from 6 weeks to 3 weeks. I resolved 47 critical production issues this year.' Numbers win promotions.",
     "role_b_briefing": "Your direct report wants to discuss promotion. You agree they're performing well.\n\nBut there are constraints:\n- Only 1 Senior promotion slot this year\n- 3 candidates are eligible\n- Budget is tight\n\nYou need to:\n1. Hear their case\n2. Challenge them to see if they're truly Senior level\n3. Be honest about the constraints\n4. Give them a clear path forward even if promotion isn't immediate",
@@ -382,18 +639,36 @@
       "clear_ask": 10
     },
     "resource_links": [
-      { "title": "How to Ask for a Promotion", "url": "https://hbr.org/2018/01/how-to-ask-for-a-promotion", "type": "article" },
-      { "title": "Engineering Career Ladders", "url": "https://www.progression.fyi/", "type": "article" }
+      {
+        "title": "How to Ask for a Promotion",
+        "url": "https://hbr.org/2018/01/how-to-ask-for-a-promotion",
+        "type": "article"
+      },
+      {
+        "title": "Engineering Career Ladders",
+        "url": "https://www.progression.fyi/",
+        "type": "article"
+      }
     ],
     "role_a_name": "Junior Developer",
-    "role_b_name": "Engineering Manager"
+    "role_b_name": "Engineering Manager",
+    "title_id": "Promosi Diri",
+    "role_a_name_id": "Developer Junior",
+    "role_b_name_id": "Engineering Manager",
+    "role_a_briefing_id": "Anda sudah 2 tahun sebagai Junior Developer. Anda merasa layak naik ke posisi Mid-Level. Anda sudah handle beberapa project sendiri, mentor junior baru, dan dapat feedback bagus.\n\nTugas Anda: Presentasikan argumen promosi ke Engineering Manager. Persiapan:\n1. Data pencapaian konkret\n2. Perbandingan dengan ekspektasi Mid-Level\n3. Rencana pengembangan ke depan\n4. Negosiasi kenaikan gaji yang realistis",
+    "role_b_briefing_id": "Anda adalah Engineering Manager. Seorang Junior Developer minta meeting untuk bahas promosi ke Mid-Level.\n\nMereka memang performa bagus: handle project sendiri, mentor junior baru. Tapi budget promotion sudah dialokasikan untuk orang lain.\n\nTugas Anda: Dengar argumen mereka dengan adil. Beri feedback jujur. Cari solusi win-win meskipun budget terbatas."
   },
   {
     "title": "The Resignation Letter",
     "mode": "duel",
     "category": "career-growth",
     "difficulty": "advanced",
-    "tags": ["resignation", "counter-offer", "professional-exit", "career"],
+    "tags": [
+      "resignation",
+      "counter-offer",
+      "professional-exit",
+      "career"
+    ],
     "role_a_briefing": "You've decided to resign. You accepted an offer at another company: better role, 30% salary increase, and remote-first culture.\n\nYou need to tell your current manager. You've been here 3 years, you like the team, but you've outgrown the role.\n\nYour task:\n1. Resign professionally\n2. Give proper notice (2 weeks or per contract)\n3. Offer to help with transition\n4. Be prepared for a counter-offer (are you open to staying?)",
     "role_a_secret_objective": "If they counter-offer, respond thoughtfully. Don't accept on the spot. Say: 'I appreciate the counter-offer. Can I have 24 hours to consider?' Most counter-offers end badly within 6 months. Know your reasons for leaving before you enter the conversation.",
     "role_b_briefing": "One of your best developers just asked for a \"quick chat.\" You sense something serious.\n\nYour goals:\n1. Understand their reasons for leaving\n2. Assess if it's fixable (money? growth? culture?)\n3. Decide whether to counter-offer\n4. If they're set on leaving, support their transition gracefully\n\nYou have budget flexibility up to 25% increase. But money isn't always the reason.",
@@ -406,18 +681,37 @@
       "clarity_of_reasons": 15
     },
     "resource_links": [
-      { "title": "How to Resign Professionally", "url": "https://www.themuse.com/advice/how-to-quit-your-job-gracefully", "type": "article" },
-      { "title": "Should You Accept a Counter Offer?", "url": "https://hbr.org/2016/09/dont-accept-a-counteroffer", "type": "article" }
+      {
+        "title": "How to Resign Professionally",
+        "url": "https://www.themuse.com/advice/how-to-quit-your-job-gracefully",
+        "type": "article"
+      },
+      {
+        "title": "Should You Accept a Counter Offer?",
+        "url": "https://hbr.org/2016/09/dont-accept-a-counteroffer",
+        "type": "article"
+      }
     ],
     "role_a_name": "Resigning Developer",
-    "role_b_name": "Engineering Lead"
+    "role_b_name": "Engineering Lead",
+    "title_id": "Surat Pengunduran Diri",
+    "role_a_name_id": "Resigning Developer",
+    "role_b_name_id": "Engineering Lead",
+    "role_a_briefing_id": "Anda memutuskan untuk resign dari perusahaan pertama tempat Anda kerja 4 tahun. Anda dapat offer bagus dari perusahaan lain.\n\nAnda menghargai perusahaan ini: mereka yang membimbing Anda dari junior ke level sekarang. Tapi Anda butuh growth yang lebih.\n\nTugas Anda: Sampaikan pengunduran diri secara profesional. Jaga hubungan baik. Bantu transisi.",
+    "role_b_briefing_id": "Anda adalah Engineering Lead. Salah satu anggota tim terbaik Anda, yang sudah 4 tahun di perusahaan, minta meeting. Anda curiah mereka mau resign.\n\nIni pukulan berat: mereka handle 2 project kritis. Jika pergi, project terancam.\n\nTugas Anda: Cari tahu alasan mereka. Tawarkan solusi jika memungkinkan. Jika tidak, bantu transisi dengan profesional. Jangan bakar jembatan."
   },
   {
     "title": "The Refactoring Crusade",
     "mode": "coop",
     "category": "architecture",
     "difficulty": "advanced",
-    "tags": ["refactoring", "legacy-code", "cto", "technical-debt", "pitching"],
+    "tags": [
+      "refactoring",
+      "legacy-code",
+      "cto",
+      "technical-debt",
+      "pitching"
+    ],
     "role_a_briefing": "You and your partner (Staff Engineer) want to refactor the company's 200,000-line monolith. Current problems:\n- 7 production incidents in 3 months due to old code\n- New engineer onboarding: 6 weeks (industry average: 2 weeks)\n- Deployment takes 3 hours\n- No automated tests\n\nYou have 5 minutes to prepare a pitch, then 5 minutes to present to the CTO (played by AI).\n\nEstimated refactor: 3 months, 2 engineers full-time.",
     "role_a_secret_objective": "Propose the 'Strangler Fig Pattern' - refactor gradually, not all at once. 'We can extract one service at a time while the monolith still runs. We start with the payment module - it's the riskiest. We show value in 2 weeks, not 3 months.' This shows pragmatism.",
     "role_b_briefing": "You and your Tech Lead partner want to refactor the monolith. You have additional data:\n- Security audit: 15 critical vulnerabilities in outdated libraries\n- Libraries: Express 3 (2014), Node 10 (EOL 2021)\n- Compliance audit in 6 months - will fail without updates\n\nThe CTO is a \"show me the money\" type. Tech arguments don't work. Business arguments do.",
@@ -430,8 +724,16 @@
       "collaboration_quality": 15
     },
     "resource_links": [
-      { "title": "Strangler Fig Pattern", "url": "https://martinfowler.com/bliki/StranglerFigApplication.html", "type": "article" },
-      { "title": "How to Pitch Technical Debt to Management", "url": "https://www.infoq.com/articles/technical-debt-management-pitch/", "type": "article" }
+      {
+        "title": "Strangler Fig Pattern",
+        "url": "https://martinfowler.com/bliki/StranglerFigApplication.html",
+        "type": "article"
+      },
+      {
+        "title": "How to Pitch Technical Debt to Management",
+        "url": "https://www.infoq.com/articles/technical-debt-management-pitch/",
+        "type": "article"
+      }
     ],
     "role_a_name": "Tech Lead",
     "role_b_name": "Staff Engineer",
@@ -439,14 +741,25 @@
     "initial_content": {
       "problem": "Draw the current monolith architecture and your proposed microservices split using the Strangler Fig pattern. Start with the diagram below and modify it.",
       "template": "flowchart TB\n    subgraph Current[Current Monolith]\n        A[Web Server\n        Express 3 / Node 10]\n        B[PostgreSQL\n        200K lines]\n        C[Queue System\n        Bull]\n    end\n\n    subgraph Problems[Key Problems]\n        P1[\"7 incidents/quarter\"]\n        P2[\"6 week onboarding\"]\n        P3[\"3 hour deployments\"]\n        P4[\"15 critical vulns\"]\n    end\n\n    A --> B\n    A --> C\n    B --> P1\n    C --> P2\n    A --> P3\n    A --> P4\n\n    %% TODO: Add your proposed microservices architecture below\n    %% Example:\n    %% subgraph Future[Phase 1: Payment Service]\n    %%     PS[Payment Service\n    %%     Node 20 / Express 4]\n    %%     PDB[Payment DB\n    %%     PostgreSQL 16]\n    %% end"
-    }
+    },
+    "title_id": "Perang Salib Refactoring",
+    "role_a_name_id": "Tech Lead",
+    "role_b_name_id": "Staff Engineer",
+    "role_a_briefing_id": "Anda adalah Tech Lead. Kode base Anda berantakan - hasil bertahun-tahun \"cepat rilis dulu, perbaiki nanti.\" Sekarang setiap tambah fitur baru butuh 3x lebih lama.\n\nProposal Anda: Refactor besar-besaran selama 2 sprint. Tim engineering setuju. Tapi Staff Engineer (atasan Anda) skeptis.\n\nTugas Anda: Yakinkan Staff Engineer bahwa refactor ini INVESTASI, bukan pemborosan. Beri data dan argumen kuat.",
+    "role_b_briefing_id": "Anda adalah Staff Engineer. Tech Lead Anda ingin refactor besar-besaran - 2 sprint penuh hanya untuk refactor.\n\nAnda skeptis: \"2 sprint tanpa fitur baru? Bos akan bertanya.\"\n\nAnda pernah lihat refactor gagal di perusahaan sebelumnya: malah bikin bug baru dan molor.\n\nTugas Anda: Challenge argumen Tech Lead. Pastikan refactor benar-benar perlu, bukan karena \"enak aja.\""
   },
   {
     "title": "The Database Migration",
     "mode": "coop",
     "category": "architecture",
     "difficulty": "advanced",
-    "tags": ["database", "migration", "postgresql", "mongodb", "data-engineering"],
+    "tags": [
+      "database",
+      "migration",
+      "postgresql",
+      "mongodb",
+      "data-engineering"
+    ],
     "role_a_briefing": "Your team wants to migrate from PostgreSQL to MongoDB. The argument: \"Our data is semi-structured. Schemas change every sprint. Migrations are slowing us down.\"\n\nYou and your partner (Data Engineer) must create a migration plan. Consider:\n1. Data integrity: How to ensure no data loss?\n2. Downtime: Can you migrate with zero downtime?\n3. Rollback: What if MongoDB doesn't work out?\n4. Application changes: How much code needs to change?\n\nCurrent data: 50 million records, 500GB.",
     "role_a_secret_objective": "Question whether migration is even necessary. 'What if we use PostgreSQL JSONB columns for semi-structured data? We get schema flexibility without giving up ACID guarantees.' Sometimes the best migration is no migration.",
     "role_b_briefing": "You're skeptical of the PostgreSQL-to-MongoDB migration. You've seen this go wrong before.\n\nYour concerns:\n- Data relationships: Orders JOIN with 6 other tables. MongoDB can't do joins efficiently.\n- Reporting: Finance team runs complex SQL reports. MongoDB aggregation pipeline is not the same.\n- Transactions: Payment processing needs ACID. MongoDB transactions exist but are slower.\n\nHelp create a migration plan, but don't be afraid to push back if it's the wrong decision.",
@@ -459,8 +772,16 @@
       "alternative_consideration": 15
     },
     "resource_links": [
-      { "title": "PostgreSQL vs MongoDB: When to Use Which", "url": "https://www.mongodb.com/compare/mongodb-postgresql", "type": "article" },
-      { "title": "Zero-Downtime Database Migrations", "url": "https://engineering.instagram.com/zero-downtime-database-migrations-77e3f57db7f0", "type": "article" }
+      {
+        "title": "PostgreSQL vs MongoDB: When to Use Which",
+        "url": "https://www.mongodb.com/compare/mongodb-postgresql",
+        "type": "article"
+      },
+      {
+        "title": "Zero-Downtime Database Migrations",
+        "url": "https://engineering.instagram.com/zero-downtime-database-migrations-77e3f57db7f0",
+        "type": "article"
+      }
     ],
     "role_a_name": "MongoDB Advocate",
     "role_b_name": "PostgreSQL Advocate",
@@ -468,14 +789,25 @@
     "initial_content": {
       "problem": "Design the migration plan from PostgreSQL to MongoDB. Show the current architecture, proposed target, and the phased migration steps.",
       "template": "flowchart LR\n    subgraph Current[Current: PostgreSQL]\n        PG[(PostgreSQL\n        50M records\n        500GB)]\n        APP[Application\n        Node.js / Express]\n        REP[Reporting\n        SQL Queries]\n    end\n\n    subgraph Options[Architecture Options]\n        O1[\"Option A:\n        Full MongoDB Migration\"]\n        O2[\"Option B:\n        Hybrid: PG + MongoDB\"]\n        O3[\"Option C:\n        Stay on PG + JSONB\"]\n    end\n\n    APP --> PG\n    PG --> REP\n\n    %% TODO: Add your proposed migration plan\n    %% Show phased approach, data flow, rollback strategy\n    %%\n    %% Phase 1: Move product catalog to MongoDB\n    %% Phase 2: Dual-write to both databases\n    %% Phase 3: Cutover\n    %% Phase 4: Decommission old PG tables"
-    }
+    },
+    "title_id": "Migrasi Database",
+    "role_a_name_id": "Advokat MongoDB",
+    "role_b_name_id": "Advokat PostgreSQL",
+    "role_a_briefing_id": "Anda adalah advokat MongoDB. Tim Anda pakai PostgreSQL sekarang, dan sering struggling dengan schema changes dan migrasi.\n\nAnda yakin MongoDB lebih cocok: schema-less, scale horizontal gampang, developer lebih produktif.\n\nTugas Anda: Debat dengan advokat PostgreSQL. Argumen Anda:\n- Schema flexibility untuk product yang fast-iterating\n- Horizontal scaling built-in (sharding)\n- Developer productivity: no migration headaches\n- Document model lebih natural untuk data Anda",
+    "role_b_briefing_id": "Anda adalah advokat PostgreSQL. Tim Anda pakai PostgreSQL sekarang dan cukup stabil. Rekan Anda ingin migrasi ke MongoDB.\n\nAnda yakin PostgreSQL lebih aman:\n- ACID compliance untuk data finansial\n- Ekosistem mateng dan tools yang mature\n- Relational model lebih predictable untuk reporting\n- Anda sudah investasi banyak di optimasi PostgreSQL\n\nTugas Anda: Debat dengan advokat MongoDB. Jangan sampai tim pindah ke database yang kurang tepat."
   },
   {
     "title": "The Microservices Split",
     "mode": "coop",
     "category": "architecture",
     "difficulty": "advanced",
-    "tags": ["microservices", "monolith", "service-boundary", "architecture", "ddd"],
+    "tags": [
+      "microservices",
+      "monolith",
+      "service-boundary",
+      "architecture",
+      "ddd"
+    ],
     "role_a_briefing": "Your company's monolith is becoming unmanageable. The CTO wants to split into microservices. You and Architect B must decide the service boundaries.\n\nCurrent monolith domains:\n- User management (auth, profiles, permissions)\n- Product catalog (CRUD, search, inventory)\n- Order processing (cart, checkout, payment)\n- Notification (email, push, SMS)\n- Analytics (reporting, dashboards)\n\nYou have 10 minutes to design the service boundaries and justify your decisions.",
     "role_a_secret_objective": "Start with Domain-Driven Design principles. Identify BOUNDED CONTEXTS first: 'User management and Authentication are separate concerns. They should be separate services.' Use DDD terminology - it shows you've thought deeply about this.",
     "role_b_briefing": "You're the second architect in this discussion. You've seen microservices fail due to:\n- Too many services too early\n- Wrong service boundaries\n- Ignoring distributed systems complexity\n\nYour approach: Start with the FEWEST services possible. You can always split later.\n\nChallenge your partner: Is this boundary truly necessary? What's the communication cost?",
@@ -488,8 +820,16 @@
       "collaboration_quality": 10
     },
     "resource_links": [
-      { "title": "Domain-Driven Design for Microservices", "url": "https://martinfowler.com/bliki/BoundedContext.html", "type": "article" },
-      { "title": "Don't Start with Microservices", "url": "https://martinfowler.com/bliki/MonolithFirst.html", "type": "article" }
+      {
+        "title": "Domain-Driven Design for Microservices",
+        "url": "https://martinfowler.com/bliki/BoundedContext.html",
+        "type": "article"
+      },
+      {
+        "title": "Don't Start with Microservices",
+        "url": "https://martinfowler.com/bliki/MonolithFirst.html",
+        "type": "article"
+      }
     ],
     "role_a_name": "Architect A",
     "role_b_name": "Architect B",
@@ -497,14 +837,24 @@
     "initial_content": {
       "problem": "Design the service boundaries for splitting this monolith into microservices. Show the current architecture and your proposed service decomposition.",
       "template": "flowchart TB\n    subgraph Monolith[Current Monolith]\n        AUTH[User Management\n        Auth / Profiles / Permissions]\n        CAT[Product Catalog\n        CRUD / Search / Inventory]\n        ORD[Order Processing\n        Cart / Checkout / Payment]\n        NOTIF[Notification\n        Email / Push / SMS]\n        ANAL[Analytics\n        Reporting / Dashboards]\n    end\n\n    AUTH --- CAT\n    CAT --- ORD\n    ORD --- NOTIF\n    NOTIF --- ANAL\n\n    %% TODO: Draw your proposed microservices architecture\n    %% Consider bounded contexts, communication patterns\n    %%\n    %% Example:\n    %% subgraph Services[Proposed Services]\n    %%     S1[User Service]\n    %%     S2[Product Service]\n    %%     S3[Order Service]\n    %% end"
-    }
+    },
+    "title_id": "Pemisahan Microservices",
+    "role_a_name_id": "Arsitek A",
+    "role_b_name_id": "Arsitek B",
+    "role_a_briefing_id": "Anda adalah Arsitek A. Tim Anda ingin split monolith menjadi microservices. Tapi rekan arsitek (Arsitek B) punya pendekatan berbeda.\n\nPendekatan Anda: Split berdasarkan domain (DDD). Masing-masing microservice punya database sendiri. Komunikasi pakai event bus (RabbitMQ/Kafka).\n\nArgumen Anda:\n- Isolasi failure yang lebih baik\n- Setiap tim bisa deploy independen\n- Skalabilitas per service\n\nTugas Anda: Debat, cari kompromi, buat keputusan arsitektur bersama.",
+    "role_b_briefing_id": "Anda adalah Arsitek B. Tim ingin split monolith. Rekan arsitek (Arsitek A) punya pendekatan berbeda.\n\nPendekatan Anda: Split bertahap. Mulai dengan 2-3 service besar. Database tetap shared dulu. Komunikasi pakai REST/GraphQL.\n\nArgumen Anda:\n- Terlalu agresif berbahaya untuk tim kecil\n- Event bus menambah kompleksitas\n- Shared database memudahkan reporting dan query lintas service\n- Kita bisa split lagi nanti setelah mapan\n\nTugas Anda: Debat, cari kompromi, buat keputusan arsitektur bersama."
   },
   {
     "title": "The Remote Miscommunication",
     "mode": "duel",
     "category": "technical-communication",
     "difficulty": "beginner",
-    "tags": ["remote-work", "communication", "slack", "conflict-resolution"],
+    "tags": [
+      "remote-work",
+      "communication",
+      "slack",
+      "conflict-resolution"
+    ],
     "role_a_briefing": "You're working remotely. A colleague (Developer B) sent you this Slack message:\n\n\"You need to fix the API endpoint. It's wrong.\"\n\nThat's the entire message. No context, no details, no greeting. It feels rude and dismissive.\n\nYou've been working on this endpoint for 3 days. It's not \"wrong\" - they might be testing incorrectly.\n\nYour task: Respond professionally. Assume good intent. De-escalate.",
     "role_a_secret_objective": "Use 'Assume Good Intent' + 'Seek to Understand.' Reply: 'Hey, thanks for flagging. Can you share what response you're getting vs what you expected? I want to make sure I understand the issue before I dive in.' This turns a potential conflict into collaboration.",
     "role_b_briefing": "You sent a Slack message to a colleague: \"You need to fix the API endpoint. It's wrong.\"\n\nIn your mind: You were rushing between meetings. You meant to be direct and efficient, not rude. You actually respect this developer's work.\n\nThe issue: The endpoint returns 200 OK but the JSON structure doesn't match the API docs. It's a minor mismatch but it's breaking your frontend integration.\n\nYou didn't realize your message came across as harsh until they responded. Now you need to handle their response.",
@@ -517,18 +867,36 @@
       "relationship_repair": 10
     },
     "resource_links": [
-      { "title": "Remote Communication Best Practices", "url": "https://www.notion.so/blog/remote-communication", "type": "article" },
-      { "title": "Non-Violent Communication in Tech", "url": "https://www.freecodecamp.org/news/non-violent-communication-for-engineers/", "type": "article" }
+      {
+        "title": "Remote Communication Best Practices",
+        "url": "https://www.notion.so/blog/remote-communication",
+        "type": "article"
+      },
+      {
+        "title": "Non-Violent Communication in Tech",
+        "url": "https://www.freecodecamp.org/news/non-violent-communication-for-engineers/",
+        "type": "article"
+      }
     ],
     "role_a_name": "Remote Worker",
-    "role_b_name": "Colleague"
+    "role_b_name": "Colleague",
+    "title_id": "Miskomunikasi Remote",
+    "role_a_name_id": "Pekerja Remote",
+    "role_b_name_id": "Rekan Kerja",
+    "role_a_briefing_id": "Anda adalah pekerja remote di tim yang mayoritas onsite. Ini hari ke-3 Anda mencoba minta klarifikasi task lewat chat, tapi di-ignore.\n\nDi daily standup, teammate onsite bilang: \"Oh itu sudah jelas, tinggal liat di dokumen.\" Tapi Anda sudah cek dokumen dan tidak ada.\n\nAnda merasa diabaikan. Produktivitas Anda terhambat.\n\nTugas Anda: Komunikasikan frustrasi Anda secara profesional tanpa menyalahkan. Cari solusi untuk kolaborasi remote yang lebih efektif.",
+    "role_b_briefing_id": "Anda pekerja onsite di tim yang punya 1 anggota remote. Anggota remote sering tanya hal yang (menurut Anda) sudah jelas di dokumen.\n\nAnda sibuk dengan deadline sendiri. Kadang Anda ignore chat mereka karena \"sudah ada di dokumen, baca aja.\"\n\nTugas Anda: Dengarkan keluhan rekan remote. Introspeksi: Apakah Anda cukup inklusif? Cari cara agar kolaborasi remote-onsite lebih baik."
   },
   {
     "title": "The SQL Injection Incident",
     "mode": "duel",
     "category": "debugging",
     "difficulty": "intermediate",
-    "tags": ["sql-injection", "security", "database", "code-review"],
+    "tags": [
+      "sql-injection",
+      "security",
+      "database",
+      "code-review"
+    ],
     "role_a_briefing": "You're a security engineer who discovered SQL injection in the company's main API. The endpoint returns user profiles by ID.\n\nCurrent code: `SELECT * FROM users WHERE id = '${req.params.id}'`\n\nYou need to explain:\n1. Why this is dangerous (the actual impact)\n2. How to fix it (parameterized queries)\n3. How to audit the rest of the codebase for similar issues\n\nYour partner (Backend Engineer) will help implement the fix. But they might resist if it's a lot of work.",
     "role_a_secret_objective": "Don't just say 'use parameterized queries.' Show a concrete exploit: 'If I pass \"1' OR '1'='1\" as the ID, I get ALL user records including admin passwords. Here's the curl command.' Demonstrate the risk practically.",
     "role_b_briefing": "A security engineer found SQL injection in your API. You wrote this code 2 years ago when you were a junior. You feel embarrassed.\n\nYour codebase has 40+ endpoints that use string concatenation for SQL. Rewriting all of them would take weeks. The feature you're supposed to ship this sprint would be delayed.\n\nYou must:\n1. Acknowledge the issue\n2. Work with the security engineer to prioritize fixes\n3. Balance security vs delivery",
@@ -541,8 +909,16 @@
       "professionalism": 10
     },
     "resource_links": [
-      { "title": "SQL Injection Prevention Cheatsheet", "url": "https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html", "type": "article" },
-      { "title": "PortSwigger SQL Injection Tutorial", "url": "https://portswigger.net/web-security/sql-injection", "type": "article" }
+      {
+        "title": "SQL Injection Prevention Cheatsheet",
+        "url": "https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html",
+        "type": "article"
+      },
+      {
+        "title": "PortSwigger SQL Injection Tutorial",
+        "url": "https://portswigger.net/web-security/sql-injection",
+        "type": "article"
+      }
     ],
     "role_a_name": "Security Engineer",
     "role_b_name": "Backend Engineer",
@@ -551,14 +927,24 @@
       "language": "sql",
       "problem": "The endpoint /api/users/:id has a SQL injection vulnerability. Rewrite the query using parameterized statements and add input validation.",
       "template": "-- BUG: Vulnerable to SQL injection\n-- Current query in routes/users.js:\n-- const query = `SELECT * FROM users WHERE id = '${req.params.id}'`;\n\n-- TODO: Rewrite using parameterized query for PostgreSQL\n-- Hint: Use $1 instead of string interpolation\n\n-- Write the fixed query below:\nSELECT * FROM users WHERE id = ?;\n\n-- Bonus: Add input validation function\n-- CREATE OR REPLACE FUNCTION validate_uuid(val TEXT) RETURNS BOOLEAN AS $$\n-- BEGIN\n--   RETURN val ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$';\n-- END;\n-- $$ LANGUAGE plpgsql;"
-    }
+    },
+    "title_id": "Insiden SQL Injection",
+    "role_a_name_id": "Security Engineer",
+    "role_b_name_id": "Backend Engineer",
+    "role_a_briefing_id": "Anda adalah Security Engineer. Seorang user melaporkan menemukan vulnerability di aplikasi: parameter `search` di endpoint `/api/products/search` bisa di-inject SQL.\n\nAnda cek: benar, kode直接用 concatenation string:\n\n`SELECT * FROM products WHERE name LIKE '%${searchTerm}%'`\n\nAnda harus perbaiki ini SEGERA. Tapi backend engineer yang punya akses ke kode sedang cuti.\n\nTugas Anda: Komunikasikan urgensi dengan backend engineer (yang sedang cuti!) tanpa panik. Cari solusi sementara.",
+    "role_b_briefing_id": "Anda adalah Backend Engineer. Anda sedang cuti. Security Engineer menghubungi Anda darurat: ada SQL injection di kode Anda.\n\nParameter `search` di endpoint `/api/products/search` menggunakan string concatenation. Ini vulnerability serius.\n\nAnda panik. Tapi ini kode lawas yang ditulis 2 tahun lalu sebelum Anda.\n\nTugas Anda: Tangani situasi profesional. Jangan defensif. Bantu perbaiki segera."
   },
   {
     "title": "The Slow Query Showdown",
     "mode": "duel",
     "category": "debugging",
     "difficulty": "advanced",
-    "tags": ["query-optimization", "database", "performance", "indexing"],
+    "tags": [
+      "query-optimization",
+      "database",
+      "performance",
+      "indexing"
+    ],
     "role_a_briefing": "Users are complaining that the dashboard takes 30 seconds to load. You traced it to this query:\n\n```sql\nSELECT * FROM orders o\nJOIN customers c ON o.customer_id = c.id\nJOIN order_items oi ON o.id = oi.order_id\nJOIN products p ON oi.product_id = p.id\nWHERE c.created_at > '2023-01-01'\nORDER BY o.created_at DESC;\n```\n\nThe table has 5 million orders and 2 million customers.\n\nYour task: Analyze the query and propose optimizations. Your partner (DBA) will implement the index changes.",
     "role_a_secret_objective": "Run EXPLAIN ANALYZE first (verbally describe what it would show): 'We'd see Sequential Scan on orders table and a Nested Loop join that's scanning millions of rows.' Always diagnose before prescribing.",
     "role_b_briefing": "A backend engineer asks you to optimize a slow query. Looking at the schema:\n- orders: 5M rows, no index on created_at\n- customers: 2M rows, no index on created_at\n- No covering indexes exist\n\nYou need to design indexes that fix this query without breaking writes.\n\nConstraints:\n- You can add indexes, but each index slows down writes\n- Disk space is limited (add at most 3 indexes)\n- The system can handle 5 minutes of read-only maintenance mode at 2 AM",
@@ -571,8 +957,16 @@
       "collaboration": 10
     },
     "resource_links": [
-      { "title": "Using EXPLAIN ANALYZE for Query Optimization", "url": "https://www.postgresql.org/docs/current/using-explain.html", "type": "article" },
-      { "title": "Indexing Strategies for PostgreSQL", "url": "https://use-the-index-luke.com/sql/where-clause/the-equal-operator.html", "type": "article" }
+      {
+        "title": "Using EXPLAIN ANALYZE for Query Optimization",
+        "url": "https://www.postgresql.org/docs/current/using-explain.html",
+        "type": "article"
+      },
+      {
+        "title": "Indexing Strategies for PostgreSQL",
+        "url": "https://use-the-index-luke.com/sql/where-clause/the-equal-operator.html",
+        "type": "article"
+      }
     ],
     "role_a_name": "Backend Engineer",
     "role_b_name": "Database Admin",
@@ -581,14 +975,24 @@
       "language": "sql",
       "problem": "The dashboard query is scanning millions of rows. Analyze the query plan and add the optimal indexes. Orders table: 5M rows, Customers table: 2M rows.",
       "template": "-- Current slow query:\nEXPLAIN ANALYZE\nSELECT o.id, o.total, c.name, p.name AS product,\n       oi.quantity, oi.price\nFROM orders o\nJOIN customers c ON o.customer_id = c.id\nJOIN order_items oi ON o.id = oi.order_id\nJOIN products p ON oi.product_id = p.id\nWHERE c.created_at > '2023-01-01'\nORDER BY o.created_at DESC\nLIMIT 100;\n\n-- TODO: Create optimal indexes\n-- Consider:\n-- - Which columns are used in WHERE/JOIN/ORDER BY?\n-- - Would composite indexes help?\n-- - What about partial or covering indexes?\n\n-- Write your indexes below:\nCREATE INDEX idx_orders_created_at ON orders (created_at DESC);\n\n-- Add more indexes as needed..."
-    }
+    },
+    "title_id": "Pertarungan Query Lambat",
+    "role_a_name_id": "Backend Engineer",
+    "role_b_name_id": "Admin Database",
+    "role_a_briefing_id": "Anda adalah Backend Engineer. Halaman dashboard utama jadi lambat (loading > 10 detik). Anda curiga ada slow query.\n\nAnda enable slow query log dan menemukan:\n\n`SELECT * FROM orders o JOIN order_items oi ON o.id = oi.order_id JOIN products p ON oi.product_id = p.id WHERE o.status = 'pending' ORDER BY o.created_at DESC;`\n\nIni return 500.000+ baris, full table scan.\n\nAnda tidak punya akses langsung ke DB produksi. Database Admin yang punya.\n\nTugas Anda: Debug dengan DBA dan optimalkan query.",
+    "role_b_briefing_id": "Anda adalah Database Admin. Backend Engineer melaporkan query lambat di dashboard utama.\n\nQuery-nya: SELECT multi-table JOIN tanpa WHERE efektif, return 500rb+ baris.\n\nAnda lihat dari sisi DB:\n- Index yang ada tidak optimal untuk query ini\n- Full table scan di 3 tabel besar\n- I/O spike tiap kali dashboard diakses\n\nTugas Anda: Bantu backend engineer optimalkan query. Sarankan index yang tepat."
   },
   {
     "title": "The Algorithm Challenge: Two Sum",
     "mode": "duel",
     "category": "technical-communication",
     "difficulty": "intermediate",
-    "tags": ["algorithms", "coding", "problem-solving", "whiteboard"],
+    "tags": [
+      "algorithms",
+      "coding",
+      "problem-solving",
+      "whiteboard"
+    ],
     "role_a_briefing": "You're in a coding interview. The problem:\n\n\"Given an array of integers nums and an integer target, return indices of the two numbers that add up to target.\"\n\nExample: nums = [2, 7, 11, 15], target = 9 => [0, 1]\n\nYou need to:\n1. Ask clarifying questions (sorted? duplicates? always one solution?)\n2. Explain the brute force approach first (O(n^2))\n3. Then optimize to O(n) with a hash map\n4. Write clean code\n5. Test with examples\n\nYour interviewer is watching your problem-solving process, not just the answer.",
     "role_a_secret_objective": "After writing the O(n) solution, discuss trade-offs: 'This uses O(n) extra space for the hash map. If memory is constrained, we could sort first and use two pointers (O(1) space, O(n log n) time).' Show that you can think beyond one solution.",
     "role_b_briefing": "You're interviewing a candidate with the Two Sum problem.\n\nWhat you're evaluating:\n1. Do they clarify requirements first?\n2. Can they start with brute force and optimize?\n3. Do they test their code with examples?\n4. Can they discuss space/time trade-offs?\n\nTypical candidate mistakes:\n- Jumping straight to the optimal solution (looks rehearsed)\n- Not handling edge cases (empty array, no solution)\n- Forgetting to check if they're using the same element twice\n\nGuide them if stuck, but let them drive.",
@@ -601,8 +1005,16 @@
       "communication_clarity": 15
     },
     "resource_links": [
-      { "title": "Two Sum Problem Explained", "url": "https://www.youtube.com/watch?v=KLlXCFG5TnA", "type": "video" },
-      { "title": "Big O Notation Cheatsheet", "url": "https://www.bigocheatsheet.com/", "type": "article" }
+      {
+        "title": "Two Sum Problem Explained",
+        "url": "https://www.youtube.com/watch?v=KLlXCFG5TnA",
+        "type": "video"
+      },
+      {
+        "title": "Big O Notation Cheatsheet",
+        "url": "https://www.bigocheatsheet.com/",
+        "type": "article"
+      }
     ],
     "role_a_name": "Candidate",
     "role_b_name": "Interviewer",
@@ -611,14 +1023,24 @@
       "language": "javascript",
       "problem": "Given an array of integers nums and an integer target, return indices of the two numbers that add up to target.\n\nExample:\n  nums = [2, 7, 11, 15], target = 9\n  Output: [0, 1]\n  Explanation: nums[0] + nums[1] = 2 + 7 = 9\n\nAssume exactly one solution exists. You may not use the same element twice.",
       "template": "/**\n * @param {number[]} nums\n * @param {number} target\n * @return {number[]}\n */\nfunction twoSum(nums, target) {\n  // Brute force: O(n^2)\n  // for (let i = 0; i < nums.length; i++) {\n  //   for (let j = i + 1; j < nums.length; j++) {\n  //     if (nums[i] + nums[j] === target) return [i, j];\n  //   }\n  // }\n\n  // TODO: Implement O(n) solution using a hash map\n  \n}\n\n// Test cases:\n// console.log(twoSum([2, 7, 11, 15], 9)); // [0, 1]\n// console.log(twoSum([3, 2, 4], 6));       // [1, 2]\n// console.log(twoSum([3, 3], 6));           // [0, 1]"
-    }
+    },
+    "title_id": "Tantangan Algoritma: Two Sum",
+    "role_a_name_id": "Kandidat",
+    "role_b_name_id": "Pewawancara",
+    "role_a_briefing_id": "Anda kandidat yang sedang diwawancara. Soal: \"Buat fungsi yang menerima array of integers dan target integer. Kembalikan index dari dua angka yang jumlahnya sama dengan target.\"\n\nContoh: nums = [2, 7, 11, 15], target = 9 → return [0, 1]\n\nAnda harus:\n1. Tanya clarifying questions dulu\n2. Sebutkan brute force solution\n3. Optimasi ke O(n) pakai hash map\n4. Analisis time & space complexity\n5. Handle edge cases",
+    "role_b_briefing_id": "Anda pewawancara. Anda memberi soal Two Sum ke kandidat.\n\nYang Anda nilai:\n1. Apakah mereka tanya clarifying questions?\n2. Bisakah mereka jelaskan brute force dan kenapa kurang optimal?\n3. Bisakah mereka optimasi sendiri ke O(n) pakai hash map?\n4. Apakah mereka handle edge cases? (array kosong, tidak ada solusi, duplicate numbers)\n5. Bagaimana komunikasi mereka selama ngoding?\n\nJika mereka langsung jawab O(n) hash map tanpa mikir, tanya: \"Sekarang bagaimana kalau array-nya sorted?\""
   },
   {
     "title": "The Production Hotfix",
     "mode": "duel",
     "category": "debugging",
     "difficulty": "intermediate",
-    "tags": ["debugging", "hotfix", "production", "code-review"],
+    "tags": [
+      "debugging",
+      "hotfix",
+      "production",
+      "code-review"
+    ],
     "role_a_briefing": "A critical bug is live in production. The checkout page crashes when users apply a coupon code with special characters (e.g., 'SAVE20!').\n\nBug report:\n- Only happens with coupons containing special characters\n- Error in logs: \"TypeError: Cannot read properties of undefined (reading 'apply')\"\n- The coupon 'SUMMER20' works fine, but 'SUMMER20!' crashes\n\nYou have 8 minutes to:\n1. Find the bug in the code below\n2. Fix it\n3. Write a test to prevent regression\n4. Brief your reviewer on the root cause",
     "role_a_secret_objective": "After fixing, propose a more robust approach: 'Instead of just sanitizing the input, we should validate coupon codes against a strict regex pattern on both frontend and backend.' This prevents future similar bugs.",
     "role_b_briefing": "You're reviewing a hotfix for a production bug. The developer found and fixed the issue.\n\nReview their fix:\n1. Is it a proper fix or just a band-aid?\n2. Does it handle all edge cases?\n3. Is there a test?\n4. Could this same bug pattern exist elsewhere?\n\nPush back if the fix isn't thorough enough. Production bugs need root cause fixes, not symptom patches.",
@@ -631,8 +1053,16 @@
       "communication": 15
     },
     "resource_links": [
-      { "title": "How to Debug JavaScript in Production", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error", "type": "article" },
-      { "title": "Writing Effective Unit Tests", "url": "https://www.freecodecamp.org/news/how-to-write-unit-tests-in-javascript/", "type": "article" }
+      {
+        "title": "How to Debug JavaScript in Production",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error",
+        "type": "article"
+      },
+      {
+        "title": "Writing Effective Unit Tests",
+        "url": "https://www.freecodecamp.org/news/how-to-write-unit-tests-in-javascript/",
+        "type": "article"
+      }
     ],
     "role_a_name": "Bug Reporter",
     "role_b_name": "Code Reviewer",
@@ -641,14 +1071,24 @@
       "language": "javascript",
       "problem": "Checkout crashes when users apply a coupon with special characters (e.g., 'SAVE20!'). Error: \"TypeError: Cannot read properties of undefined (reading 'apply')\"",
       "template": "// services/couponService.js\n\nconst coupons = {\n  'SUMMER20': { discount: 0.2, minPurchase: 50000 },\n  'WELCOME10': { discount: 0.1, minPurchase: 0 },\n  'SAVE20': { discount: 0.2, minPurchase: 100000 },\n};\n\n// BUG: Crashes when couponCode has special characters\nfunction applyCoupon(couponCode, total) {\n  const normalized = couponCode.toUpperCase().trim();\n  const coupon = coupons[normalized];\n  \n  // TODO: Fix the bug here\n  const discount = coupon.apply(total);\n  \n  return {\n    discountedTotal: total - discount,\n    discount,\n    couponCode: normalized\n  };\n}\n\nmodule.exports = { applyCoupon };\n\n// Test cases:\n// applyCoupon('SAVE20!', 100000)  // should not crash\n// applyCoupon('SUMMER20', 50000)   // should work"
-    }
+    },
+    "title_id": "Hotfix Produksi",
+    "role_a_name_id": "Pelapor Bug",
+    "role_b_name_id": "Reviewer Kode",
+    "role_a_briefing_id": "Anda melaporkan bug di produksi: fitur payment double-charge customer. Setiap transaksi sukses, customer di-charge 2x.\n\nIni kritis - uang customer, reputasi perusahaan taruhannya. Setiap menit berarti ada lebih banyak korban.\n\nAnda harus yakinkan code reviewer untuk approve hotfix CEPAT. Tapi reviewer terkenal thorough dan tidak suka hotfix terburu-buru.\n\nTugas Anda: Komunikasikan urgensi tanpa terlihat panik. Berikan konteks yang cukup untuk quick review.",
+    "role_b_briefing_id": "Anda code reviewer. Seorang developer minta approve hotfix urgent: \"Payment double-charge! Harus segera di-deploy!\"\n\nAnda paham urgensi. Tapi Anda pernah lihat hotfix terburu-buru yang bikin masalah lebih besar.\n\nTugas Anda: Review secepat mungkin TANPA mengorbankan kualitas. Fokus pada: apa yang berubah, kenapa ini fixnya benar, dan apa risiko rollback jika masih salah."
   },
   {
     "title": "The Data Pipeline Disaster",
     "mode": "coop",
     "category": "debugging",
     "difficulty": "advanced",
-    "tags": ["data-pipeline", "etl", "python", "analytics"],
+    "tags": [
+      "data-pipeline",
+      "etl",
+      "python",
+      "analytics"
+    ],
     "role_a_briefing": "The daily ETL pipeline failed at 3 AM. The analytics team's dashboard has no data for today.\n\nError log:\n```\nFile \"etl/transform.py\", line 142, in normalize_currency\n    rate = exchange_rates[currency]\nKeyError: 'BTC'\n```\n\nYour job: Work with your partner to fix the pipeline and reprocess today's data.\n\nThe pipeline:\n1. Extract: Pull raw transaction data from PostgreSQL (5M rows/day)\n2. Transform: Clean, normalize currencies, categorize spending\n3. Load: Insert into analytics warehouse\n\nThe BTC error might not be the only issue. There might be other edge cases.",
     "role_a_secret_objective": "After fixing the immediate bug, ask: 'Could there be other missing currencies? Let me query the raw data to check.' Then suggest a more resilient approach: 'Instead of failing on missing rates, we should log a warning and use a default rate of 1.0, then flag these for review.'",
     "role_b_briefing": "The ETL pipeline failed. Your partner is looking at the code.\n\nWhat you see in the logs:\n- Pipeline ran successfully for 3 hours\n- Processed 4.2M out of 5M rows\n- Failed on row with currency 'BTC'\n\nYou suspect more issues:\n- What if a column is null?\n- What if a date is malformed?\n- What if the exchange_rates API was down?\n\nHelp your partner fix not just this error, but make the pipeline more robust.",
@@ -661,8 +1101,16 @@
       "monitoring_suggestion": 15
     },
     "resource_links": [
-      { "title": "ETL Best Practices", "url": "https://www.freecodecamp.org/news/etl-pipeline-best-practices/", "type": "article" },
-      { "title": "Error Handling in Data Pipelines", "url": "https://martinfowler.com/articles/data-monitoring.html", "type": "article" }
+      {
+        "title": "ETL Best Practices",
+        "url": "https://www.freecodecamp.org/news/etl-pipeline-best-practices/",
+        "type": "article"
+      },
+      {
+        "title": "Error Handling in Data Pipelines",
+        "url": "https://martinfowler.com/articles/data-monitoring.html",
+        "type": "article"
+      }
     ],
     "role_a_name": "Data Engineer",
     "role_b_name": "Analytics Engineer",
@@ -671,14 +1119,24 @@
       "language": "python",
       "problem": "The daily ETL pipeline crashes on rows with missing currency exchange rates. Fix the transform step to handle missing rates gracefully and log errors instead of crashing.",
       "template": "# etl/transform.py\n\nimport json\nfrom datetime import datetime\n\n# Exchange rates fetched daily from API\nexchange_rates = {\n    'USD': 1.0,\n    'EUR': 1.08,\n    'GBP': 1.26,\n    'JPY': 0.0067,\n    'IDR': 0.000064,\n    'SGD': 0.74,\n}\n\ndef normalize_currency(amount, currency):\n    \"\"\"Convert any currency to USD based on exchange rates.\"\"\"\n    # BUG: KeyError if currency not in exchange_rates\n    rate = exchange_rates[currency]\n    return amount * rate\n\n\ndef transform_row(row):\n    \"\"\"Apply transformations to a single raw transaction row.\"\"\"\n    try:\n        amount = float(row['amount'])\n        currency = row['currency']\n        \n        normalized_amount = normalize_currency(amount, currency)\n        category = row.get('category', 'uncategorized')\n        \n        return {\n            'transaction_id': row['id'],\n            'user_id': row['user_id'],\n            'amount_usd': round(normalized_amount, 2),\n            'category': category,\n            'timestamp': row['created_at'],\n        }\n    except (ValueError, KeyError) as e:\n        # TODO: Don't just crash - log the failed row\n        # and continue processing\n        raise e\n\n\ndef run_pipeline(rows):\n    \"\"\"Process all rows through the transform step.\"\"\"\n    # BUG: A single bad row crashes the entire pipeline\n    return [transform_row(row) for row in rows]"
-    }
+    },
+    "title_id": "Bencana Data Pipeline",
+    "role_a_name_id": "Data Engineer",
+    "role_b_name_id": "Analytics Engineer",
+    "role_a_briefing_id": "Pipeline data Anda gagal tiap malam jam 3 pagi, 3 hari berturut-turut. Laporan pagi selalu kosong.\n\nError-nya: \"java.lang.OutOfMemoryError: Java heap space\" di job transformasi data.\n\nJob ini proses 50 juta record dari API partner. Ukuran data naik 20% bulan ini. Kode sudah tidak berubah 6 bulan.\n\nAnda harus debug dengan partner Anda. Cari solusi: scale up? optimasi kode? ubah arsitektur?",
+    "role_b_briefing_id": "Pipeline data error tiap malam. Data engineer bilang ada OOM di job transformasi.\n\nDari dashboard Anda:\n- Heap usage: 12GB (max: 8GB)\n- Input data: 50 juta record (naik 15% dari bulan lalu)\n- Job duration: 45 menit (normal: 25 menit)\n- GC time: 18 menit (normal: 3 menit)\n\nJelas ada memory leak atau kode tidak efisien. Tugas Anda: Kolaborasi dengan data engineer untuk debug. Cari apakah perlu refactor kode atau scaling infrastructure."
   },
   {
     "title": "The FizzBuzz Enterprise Edition",
     "mode": "duel",
     "category": "technical-communication",
     "difficulty": "beginner",
-    "tags": ["code-review", "simplicity", "junior", "overengineering"],
+    "tags": [
+      "code-review",
+      "simplicity",
+      "junior",
+      "overengineering"
+    ],
     "role_a_briefing": "You wrote FizzBuzz for a coding challenge. Your code works, but a senior developer says it's \"overengineered.\"\n\nYour solution uses:\n- Strategy pattern\n- Dependency injection\n- Interface segregation\n- Abstract factory\n\nYou thought this showed good design patterns knowledge. The senior disagrees.\n\nDefend your approach or accept the feedback and simplify.",
     "role_a_secret_objective": "If the senior says it's overengineered, respond: 'I see your point. I was trying to show design pattern knowledge. But I understand that for this simple problem, a 10-line function is more maintainable. Let me refactor.' This shows you can take feedback gracefully.",
     "role_b_briefing": "You're reviewing a FizzBuzz solution. The candidate used 8 classes, 3 interfaces, and an abstract factory for a problem that should take 10 lines.\n\nYour feedback: \"This is overengineered. FizzBuzz is 10 lines of code. You've added 200 lines of abstraction for no benefit.\"\n\nThe candidate might get defensive. Handle this as a teaching moment, not a criticism session.\n\nWhat you're evaluating:\n- Can they explain WHY they chose this approach?\n- Can they accept feedback?\n- Do they know when simple code is better than \"elegant\" code?",
@@ -691,8 +1149,16 @@
       "communication": 10
     },
     "resource_links": [
-      { "title": "YAGNI Principle Explained", "url": "https://www.martinfowler.com/bliki/Yagni.html", "type": "article" },
-      { "title": "Write Simple Code, Not Simple Code", "url": "https://www.youtube.com/watch?v=k8s2E4nWn0A", "type": "video" }
+      {
+        "title": "YAGNI Principle Explained",
+        "url": "https://www.martinfowler.com/bliki/Yagni.html",
+        "type": "article"
+      },
+      {
+        "title": "Write Simple Code, Not Simple Code",
+        "url": "https://www.youtube.com/watch?v=k8s2E4nWn0A",
+        "type": "video"
+      }
     ],
     "role_a_name": "Junior Developer",
     "role_b_name": "Senior Developer",
@@ -701,14 +1167,24 @@
       "language": "javascript",
       "problem": "Implement FizzBuzz. Print numbers 1 to 100. For multiples of 3, print 'Fizz' instead. For multiples of 5, print 'Buzz'. For multiples of both, print 'FizzBuzz'. Keep it simple!",
       "template": "// FizzBuzz - Keep it simple!\n\n// Overengineered version (don't write this):\n// class FizzBuzzStrategyFactory { ... }\n// const fizzBuzzProcessor = new FizzBuzzProcessor(\n//   new FizzBuzzStrategy(\n//     new FizzRule(),\n//     new BuzzRule(),\n//     new FizzBuzzRule()\n//   )\n// );\n\n// TODO: Write a clean, simple FizzBuzz\nfunction fizzBuzz(n) {\n  \n}\n\n// Test\nfor (let i = 1; i <= 100; i++) {\n  console.log(fizzBuzz(i));\n}"
-    }
+    },
+    "title_id": "FizzBuzz Enterprise Edition",
+    "role_a_name_id": "Developer Junior",
+    "role_b_name_id": "Developer Senior",
+    "role_a_briefing_id": "Anda junior developer yang baru lulus bootcamp. Tugas pertama Anda: implementasi FizzBuzz.\n\nTapi ini FizzBuzz versi enterprise:\n- Harus support berbagai format output (JSON, XML, CSV)\n- Konfigurable via database (bukan hardcode angka 3 dan 5)\n- Support multiple \"kata\" bukan hanya Fizz dan Buzz\n- REST API endpoint\n- Full test coverage\n\nAnda bingung harus mulai dari mana. Senior developer Anda bilang: \"Sederhana aja kok, FizzBuzz doang.\"\n\nTugas Anda: Minta bimbingan tanpa terlihat tidak kompeten.",
+    "role_b_briefing_id": "Anda senior developer. Junior baru lulus bootcamp ditugasin bikin FizzBuzz... versi enterprise. Dia kelihatan overwhelmed.\n\nAnda ingat dulu juga pernah mengalami hal sama. Tugas Anda: Bimbing junior tanpa memberikan jawaban langsung. Ajari mereka cara memecah masalah besar jadi kecil-kecil.\n\nPanduan:\n1. Jangan tertawakan mereka\n2. Minta mereka mulai dari yang paling dasar: FizzBuzz biasa\n3. Tambah layer satu per satu\n4. Ajarkan prioritas: mana yang penting untuk MVP"
   },
   {
     "title": "The Database Schema Debate",
     "mode": "coop",
     "category": "architecture",
     "difficulty": "intermediate",
-    "tags": ["database-design", "schema", "normalization", "tradeoffs"],
+    "tags": [
+      "database-design",
+      "schema",
+      "normalization",
+      "tradeoffs"
+    ],
     "role_a_briefing": "Your team is designing a database for a multi-tenant e-commerce platform. Each tenant is a separate store.\n\nDesign options:\n- Option A: One database per tenant\n- Option B: One database with tenant_id on every table\n- Option C: Schema per tenant (PostgreSQL schemas)\n\nYou're arguing for Option B (shared database, tenant_id). Your partner prefers Option A.\n\nYou have 10 minutes to agree on a design and justify it.",
     "role_a_secret_objective": "Acknowledge your partner's concerns about Option B: 'Isolation is important. What if one tenant's query slows down everyone? We'll implement connection pooling with per-tenant resource limits.' This shows you've thought about the downsides.",
     "role_b_briefing": "You're designing the database architecture with your partner. You prefer Option A (database per tenant) for security isolation.\n\nYour concerns:\n- A bug in a query could expose another tenant's data\n- A noisy neighbor could degrade performance for everyone\n- Backups and restores affect all tenants\n- Schema migrations are harder with shared tables\n\nBUT you know database-per-tenant is operationally expensive with 100+ tenants.",
@@ -721,8 +1197,16 @@
       "collaboration": 15
     },
     "resource_links": [
-      { "title": "Multi-Tenant Database Patterns", "url": "https://www.postgresql.org/docs/current/ddl-schemas.html", "type": "article" },
-      { "title": "Multi-Tenant Architecture in SaaS", "url": "https://www.freecodecamp.org/news/multi-tenant-saas-architecture/", "type": "article" }
+      {
+        "title": "Multi-Tenant Database Patterns",
+        "url": "https://www.postgresql.org/docs/current/ddl-schemas.html",
+        "type": "article"
+      },
+      {
+        "title": "Multi-Tenant Architecture in SaaS",
+        "url": "https://www.freecodecamp.org/news/multi-tenant-saas-architecture/",
+        "type": "article"
+      }
     ],
     "role_a_name": "Tenant-ID Advocate",
     "role_b_name": "Separate-DB Advocate",
@@ -730,14 +1214,24 @@
     "initial_content": {
       "problem": "Design the multi-tenant database architecture for a SaaS e-commerce platform. Show your chosen approach and why.",
       "template": "flowchart TB\n    subgraph Tenants[Tenants]\n        T1[Store A\n        50K products]\n        T2[Store B\n        200K products]\n        T3[Store C\n        5K products]\n    end\n\n    subgraph Options[Architecture Options]\n        O1[\"Option A:\n        Database per Tenant\"]\n        O2[\"Option B:\n        Shared DB + tenant_id\"]\n        O3[\"Option C:\n        Schema per Tenant\"]\n    end\n\n    %% TODO: Draw your chosen architecture\n    %% Show the data flow, isolation boundaries,\n    %% backup strategy, connection pooling\n    T1 --> O1\n    T2 --> O2\n    T3 --> O1"
-    }
+    },
+    "title_id": "Debat Skema Database",
+    "role_a_name_id": "Tenant-ID Advocate",
+    "role_b_name_id": "Separate-DB Advocate",
+    "role_a_briefing_id": "Anda advokat Tenant-ID. Tim Anda mendesain database multi-tenant untuk SaaS. Ada 2 pendekatan.\n\nPendekatan Anda: Semua tenant di 1 database, bedain pakai tenant_id column.\n\nArgumen:\n- Operasional lebih sederhana (1 DB, 1 backup)\n- Biaya lebih murah\n- Query lintas tenant mudah\n- Scaling cukup dengan index + partitioning\n- Migration lebih mudah\n\nTugas Anda: Debat dengan advokat Separate-DB. Cari pendekatan terbaik.",
+    "role_b_briefing_id": "Anda advokat Separate-DB. Tim Anda mendesain database multi-tenant. Ada 2 pendekatan.\n\nPendekatan Anda: Setiap tenant punya database sendiri-sendiri.\n\nArgumen:\n- Isolasi data lebih kuat (satu tenant bocor? hanya 1 DB)\n- Backup/restore per tenant\n- Performance tidak terpengaruh tenant lain\n- Compliance lebih mudah (GDPR, data residency)\n- Bisa bedain pricing tier\n\nTugas Anda: Debat dengan advokat Tenant-ID. Cari pendekatan terbaik."
   },
   {
     "title": "The Mentoring Session",
     "mode": "duel",
     "category": "career-growth",
     "difficulty": "intermediate",
-    "tags": ["mentoring", "junior-development", "pair-programming", "knowledge-transfer"],
+    "tags": [
+      "mentoring",
+      "junior-development",
+      "pair-programming",
+      "knowledge-transfer"
+    ],
     "role_a_briefing": "You're a Junior Developer who just joined the team 2 months ago. You're struggling with a feature: implementing a caching layer for the product API.\n\nYou've read the docs on Redis but you're unsure:\n- When to cache vs when to fetch fresh\n- How to handle cache invalidation\n- What TTL to use\n- How to avoid caching stale data\n\nYour Senior Developer mentor is available for 10 minutes. You need to ask focused questions that show you've done your homework. Don't just ask \"how do I cache?\" — be specific about what you've tried and where you're stuck.",
     "role_a_secret_objective": "Start with: 'I've read about Cache-Aside pattern and Write-Through. For our product API where data updates 3x a day but is read 10,000x an hour, I think Cache-Aside is better. But I'm worried about the cache stampede problem at peak traffic. What do you think?' This shows you've done research and just need validation.",
     "role_b_briefing": "You're a Senior Developer mentoring a junior. They're implementing caching for the first time.\n\nThey've read the docs but lack practical experience. Your job is not to give them the answer — it's to guide them to the right solution by asking questions:\n\n- 'What's the read/write ratio on this endpoint?'\n- 'What's the cost of serving stale data for 5 seconds? 5 minutes?'\n- 'How would you test if your cache is working?'\n- 'What happens if Redis goes down?'\n\nUse the Socratic method. Make them think, not just code.",
@@ -750,18 +1244,36 @@
       "mentoring_chemistry": 15
     },
     "resource_links": [
-      { "title": "Cache-Aside Pattern", "url": "https://docs.microsoft.com/en-us/azure/architecture/patterns/cache-aside", "type": "article" },
-      { "title": "Redis Caching Best Practices", "url": "https://redis.io/docs/manual/patterns/caching/", "type": "article" }
+      {
+        "title": "Cache-Aside Pattern",
+        "url": "https://docs.microsoft.com/en-us/azure/architecture/patterns/cache-aside",
+        "type": "article"
+      },
+      {
+        "title": "Redis Caching Best Practices",
+        "url": "https://redis.io/docs/manual/patterns/caching/",
+        "type": "article"
+      }
     ],
     "role_a_name": "Junior Developer",
-    "role_b_name": "Senior Mentor"
+    "role_b_name": "Senior Mentor",
+    "title_id": "Sesi Mentoring",
+    "role_a_name_id": "Developer Junior",
+    "role_b_name_id": "Mentor Senior",
+    "role_a_briefing_id": "Anda developer junior yang baru 6 bulan di perusahaan. Anda dapat kesempatan mentoring 1-on-1 dengan senior mentor.\n\nAnda ingin maksimalkan sesi ini. Topik yang ingin Anda bahas:\n1. Cara baca kode orang lain yang efektif\n2. Kapan waktu yang tepat untuk refactor vs rewrite\n3. Gimana cara review PR yang baik\n4. Path karir: frontend murni atau full-stack\n\nPersiapkan pertanyaan yang spesifik. Jangan buang waktu mentor dengan \"gimana cara jadi developer yang baik.\"",
+    "role_b_briefing_id": "Anda senior mentor yang ditugasin mentoring developer junior. Ini sesi 1-on-1 pertama.\n\nPendekatan Anda:\n1. Dengar dulu apa masalah dan goal mereka\n2. Jangan langsung ngasih solusi - bimbing mereka untuk nemuin sendiri\n3. Share pengalaman pribadi (termasuk kegagalan) biar relate\n4. Beri action items konkret yang bisa mereka lakukan minggu depan\n\nTujuan: Bikin mereka merasa didukung, bukan dinilai. Ukur keberhasilan dari: apakah mereka lebih pede setelah sesi ini?"
   },
   {
     "title": "The System Design Sprint",
     "mode": "coop",
     "category": "architecture",
     "difficulty": "advanced",
-    "tags": ["system-design", "real-time", "collaboration", "architecture-review"],
+    "tags": [
+      "system-design",
+      "real-time",
+      "collaboration",
+      "architecture-review"
+    ],
     "role_a_briefing": "You and your partner (Infrastructure Engineer) need to design a real-time collaborative code editor (like Google Docs for code) within 10 minutes.\n\nRequirements:\n- Multiple users edit the same file simultaneously\n- Changes sync in real-time (target: <200ms latency)\n- Support 50 concurrent users per document\n- Handle conflicts (two people edit the same line)\n- Show who's editing what (cursors, selections)\n\nYou'll present your design together. Focus on:\n1. Architecture overview (clients, server, database)\n2. Conflict resolution strategy (OT vs CRDT)\n3. Scalability considerations\n4. What you'd prototype first",
     "role_a_secret_objective": "At minute 5, ask your partner: 'Should we use Operational Transformation (OT) or CRDTs for conflict resolution?' Then lead the discussion: 'OT is battle-tested (Google Docs uses it) but complex. CRDTs are simpler but use more memory. For 50 users, I think CRDTs are the right fit.' Show that you can evaluate trade-offs on the fly.",
     "role_b_briefing": "Your partner (System Designer) wants to design a real-time collaborative code editor. You're the Infrastructure Engineer who needs to make it work at scale.\n\nKey concerns you bring:\n- WebSocket connections: 50 users × multiple documents = connection management\n- Persistence: How often do we save? What if a user disconnects?\n- Deployment: Where do WebSocket servers go? How do they scale?\n- Monitoring: How do we detect sync failures or high latency?\n\nDon't just agree — challenge your partner on scalability. A design that works for 50 users should be able to scale to 500.",
@@ -774,9 +1286,21 @@
       "collaboration_quality": 10
     },
     "resource_links": [
-      { "title": "CRDT vs OT: A Comparison", "url": "https://www.tiny.cloud/blog/operational-transformation-crdt/", "type": "article" },
-      { "title": "How Google Docs Handles Conflict Resolution", "url": "https://www.youtube.com/watch?v=0H3iY4QhGnI", "type": "video" },
-      { "title": "WebSocket Scaling Patterns", "url": "https://www.ably.io/blog/websocket-scaling-patterns", "type": "article" }
+      {
+        "title": "CRDT vs OT: A Comparison",
+        "url": "https://www.tiny.cloud/blog/operational-transformation-crdt/",
+        "type": "article"
+      },
+      {
+        "title": "How Google Docs Handles Conflict Resolution",
+        "url": "https://www.youtube.com/watch?v=0H3iY4QhGnI",
+        "type": "video"
+      },
+      {
+        "title": "WebSocket Scaling Patterns",
+        "url": "https://www.ably.io/blog/websocket-scaling-patterns",
+        "type": "article"
+      }
     ],
     "role_a_name": "System Designer",
     "role_b_name": "Infrastructure Engineer",
@@ -784,6 +1308,11 @@
     "initial_content": {
       "problem": "Design a real-time collaborative code editor for 50 concurrent users per document. Show the architecture, conflict resolution approach, and scaling strategy.",
       "template": "flowchart TB\n    subgraph Users[Users]\n        U1[User A\n        Developer]\n        U2[User B\n        Developer]\n        U3[User C\n        Reviewer]\n    end\n\n    subgraph RealTime[Real-Time Layer]\n        WS[WebSocket Server\n        Socket.IO]\n        OT[Conflict Resolution\n        CRDT / OT]\n    end\n\n    subgraph Storage[Persistence]\n        DB[(PostgreSQL\n        Document Store)]\n        CACHE[Redis\n        Ephemeral State]\n    end\n\n    %% TODO: Complete the architecture\n    %% Show how users connect, how edits flow,\n    %% how conflicts are resolved, how state persists\n    U1 --> WS\n    U2 --> WS\n    U3 --> WS\n    WS --> OT\n    OT --> DB\n    OT --> CACHE\n\n    %% Add more components:\n    %% - Load balancer for WebSocket servers\n    %% - Document service for managing versions\n    %% - Presence service for showing active users\n    %% - History service for undo/redo"
-    }
+    },
+    "title_id": "Sprint Desain Sistem",
+    "role_a_name_id": "Perancang Sistem",
+    "role_b_name_id": "Infrastructure Engineer",
+    "role_a_briefing_id": "Anda perancang sistem yang ditugasi mendesain sistem baru: real-time collaboration platform untuk tim engineering fitur seperti Google Docs tapi untuk diagram arsitektur.\n\nRequirements:\n- 10.000 user concurrent\n- Real-time sync < 500ms\n- Support banyak diagram types\n- Version history 30 hari\n- Export ke berbagai format\n\nAnda punya 10 menit untuk presentasi desain ke infrastructure engineer. Fokus pada trade-off dan keputusan arsitektur.",
+    "role_b_briefing_id": "Anda infrastructure engineer yang mengevaluasi desain sistem dari perancang sistem. Mereka presentasi platform real-time collaboration untuk diagram.\n\nYang Anda challenge:\n- Bagaimana WebSocket scaling? 10.000 concurrent connection butuh berapa node?\n- Operational cost estimate? Real-time sync mahal.\n- Bagaimana handle network partition? CRDT atau OT?\n- Disaster recovery plan?\n- Security: bagaimana mencegah unauthorized access ke diagram?\n\nAnda keras tapi adil. Desain harus robust."
   }
 ]

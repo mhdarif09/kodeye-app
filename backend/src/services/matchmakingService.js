@@ -112,64 +112,54 @@ const appendMessage = async (sessionId, msg) => {
 /**
  * Build a bilingual (ID + EN) private briefing for one participant.
  * Secret objectives are NEVER included.
+ * Uses Indonesian columns first, falls back to English.
  */
 const formatBriefing = (scenario, role) => {
   const isRoleA = role === 'role_a';
-  const roleNameId = isRoleA ? (scenario.role_a_name || 'Peran A') : (scenario.role_b_name || 'Peran B');
-  const roleNameEn = isRoleA ? (scenario.role_a_name || 'Role A') : (scenario.role_b_name || 'Role B');
-  const briefing = isRoleA ? scenario.role_a_briefing : scenario.role_b_briefing;
+  const titleId = scenario.title_id || scenario.title;
+  const roleNameId = isRoleA
+    ? (scenario.role_a_name_id || scenario.role_a_name || 'Peran A')
+    : (scenario.role_b_name_id || scenario.role_b_name || 'Peran B');
+  const roleNameEn = isRoleA
+    ? (scenario.role_a_name || scenario.role_a_name_id || 'Role A')
+    : (scenario.role_b_name || scenario.role_b_name_id || 'Role B');
+  const briefingId = isRoleA
+    ? (scenario.role_a_briefing_id || scenario.role_a_briefing || '')
+    : (scenario.role_b_briefing_id || scenario.role_b_briefing || '');
+  const briefingEn = isRoleA
+    ? (scenario.role_a_briefing || scenario.role_a_briefing_id || '')
+    : (scenario.role_b_briefing || scenario.role_b_briefing_id || '');
   const diff = difficultyLabels[scenario.difficulty] || scenario.difficulty || '-';
   const diffEn = scenario.difficulty || '-';
   const modeId = scenario.mode === 'duel' ? '⚔️ Duel' : '🤝 Co-op';
   const modeEn = scenario.mode === 'duel' ? 'Duel' : 'Co-op';
 
-  return `📋 **${scenario.title}**
+  return `📋 **${titleId}**
 Kategori: \`${scenario.category || '-'}\` · Mode: \`${modeId}\` · Level: \`${diff}\`
 
 ---
 
 **🇮🇩 Peran kamu: ${roleNameId}**
 
-${briefing}
+${briefingId}
 
 ---
 
 **🇬🇧 Your Role: ${roleNameEn}**
 Category: \`${scenario.category || '-'}\` · Mode: \`${modeEn}\` · Level: \`${diffEn}\`
 
-${briefing}`;
+${briefingEn}`;
 };
 
 /**
- * Build a bilingual artifact block (problem + template).
- */
-const formatArtifact = (scenario) => {
-  const ic = scenario.initial_content;
-  if (!ic) return null;
-  const lang = ic.language || scenario.workspace_type || '';
-  const problemEn = ic.problem || '';
-  return `**🗂️ Problem / Problem:**
-${problemEn}
-
-\`\`\`${lang}
-${ic.template || ''}
-\`\`\``;
-};
-
-/**
- * Build a bilingual start hint.
+ * Build a bilingual start hint (chat-only, no workspace).
  */
 const formatStartHint = (scenario) => {
-  const aNameId = scenario.role_a_name || 'Peran A';
-  const aNameEn = scenario.role_a_name || 'Role A';
-  const bNameId = scenario.role_b_name || 'Peran B';
-  const bNameEn = scenario.role_b_name || 'Role B';
+  const aNameId = scenario.role_a_name_id || scenario.role_a_name || 'Peran A';
+  const aNameEn = scenario.role_a_name || scenario.role_a_name_id || 'Role A';
+  const bNameId = scenario.role_b_name_id || scenario.role_b_name || 'Peran B';
+  const bNameEn = scenario.role_b_name || scenario.role_b_name_id || 'Role B';
 
-  if (scenario.workspace_type && scenario.workspace_type !== 'chat') {
-    return `🇮🇩 ${aNameId}, silakan mulai analisis/kerjakan problem di atas dan share progress kamu di chat.
-
-🇬🇧 ${aNameEn}, please start analyzing/working on the problem above and share your progress in the chat.`;
-  }
   if (scenario.mode === 'coop') {
     return `🇮🇩 ${aNameId} dan ${bNameId}, silakan mulai diskusi untuk menyelesaikan situasi ini bersama.
 
@@ -195,11 +185,6 @@ const createSession = async (entryA, entryB, mode, category) => {
     return null;
   }
 
-  // Parse JSON fields
-  const initialContent = scenario.initial_content
-    ? (typeof scenario.initial_content === 'string' ? JSON.parse(scenario.initial_content) : scenario.initial_content)
-    : null;
-
   // Randomly assign roles
   const [userA, userB] = Math.random() < 0.5
     ? [entryA, entryB]
@@ -221,26 +206,17 @@ const createSession = async (entryA, entryB, mode, category) => {
   // These are replayed when users join via arena:join, so no socket emits here.
 
   const now = new Date().toISOString();
-  const scenarioWithIc = { ...scenario, initial_content: initialContent };
 
   // Private briefing for role_a (targetRole prevents leaking to opponent)
-  const textA = formatBriefing(scenarioWithIc, 'role_a');
+  const textA = formatBriefing(scenario, 'role_a');
   await appendMessage(sessionId, { userId: 'system', role: 'system', targetRole: 'role_a', text: textA, ts: now });
 
   // Private briefing for role_b
-  const textB = formatBriefing(scenarioWithIc, 'role_b');
+  const textB = formatBriefing(scenario, 'role_b');
   await appendMessage(sessionId, { userId: 'system', role: 'system', targetRole: 'role_b', text: textB, ts: now });
 
-  // Artifact block (no targetRole — visible to both)
-  if (scenario.workspace_type && scenario.workspace_type !== 'chat' && initialContent) {
-    const artifactText = formatArtifact(scenarioWithIc);
-    if (artifactText) {
-      await appendMessage(sessionId, { userId: 'system', role: 'system', text: artifactText, ts: now });
-    }
-  }
-
   // Start hint (no targetRole — visible to both)
-  const hintText = formatStartHint(scenarioWithIc);
+  const hintText = formatStartHint(scenario);
   await appendMessage(sessionId, { userId: 'system', role: 'system', text: hintText, ts: now });
 
   return {
