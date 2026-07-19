@@ -1,4 +1,5 @@
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const authService = require('../services/authService');
 const validate = require('../middleware/validate');
 const schemas = require('../validation/authSchemas');
@@ -6,6 +7,17 @@ const verifyJWT = require('../middleware/auth');
 const logger = require('../utils/logger');
 
 const router = express.Router();
+
+const resetLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: {
+    error: {
+      message: 'Too many reset attempts, please try again later.',
+      code: 'RATE_LIMIT_EXCEEDED'
+    }
+  }
+});
 
 router.post('/register', validate(schemas.registerSchema), async (req, res, next) => {
   try {
@@ -67,7 +79,7 @@ router.post('/forgot-password', validate(schemas.forgotPasswordSchema), async (r
   }
 });
 
-router.post('/reset-password', validate(schemas.resetPasswordSchema), async (req, res, next) => {
+router.post('/reset-password', resetLimiter, validate(schemas.resetPasswordSchema), async (req, res, next) => {
   try {
     const { token, newPassword } = req.body;
     await authService.resetPassword(token, newPassword);

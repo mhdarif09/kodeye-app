@@ -17,7 +17,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className="dark h-full antialiased"
+      className="dark h-full antialiased scroll-smooth"
     >
       <body className="min-h-full flex flex-col font-sans text-foreground bg-background">
         <AuthHydrate />

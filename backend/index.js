@@ -57,7 +57,7 @@ app.use(
     origin: function (origin, cb) {
       if (!origin) return cb(null, true);
       const match = allowedOrigins.some((a) =>
-        typeof a === 'string' ? origin === a || origin === a.replace(/\/$/, '') : a.foo(origin)
+        typeof a === 'string' ? origin === a || origin === a.replace(/\/$/, '') : a.test(origin)
       );
       if (match) return cb(null, true);
       cb(new Error('Not allowed by CORS'));

@@ -69,7 +69,7 @@ export function EditProfileModal({ isOpen, onClose, currentData, onSaved }: Edit
         experienceLevel: data.experienceLevel,
         techStacks,
       });
-      const updated = res.data.user ?? res.data;
+      const updated = res.data.data;
       if (user && accessToken) setAuth({ ...user, ...updated }, accessToken, refreshToken);
       toast.success("Profil berhasil diperbarui");
       onSaved(updated);
