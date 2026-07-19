@@ -103,24 +103,7 @@ export default function RegisterPage() {
           </Button>
         </form>
 
-        <div className="relative my-6">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-border" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-muted-foreground">Atau daftar dengan</span>
-          </div>
-        </div>
-
-        <div className="flex justify-center [&>div]:w-full">
-          <GoogleLogin
-            onSuccess={onGoogleSuccess}
-            onError={() => toast.error("Terjadi kesalahan saat otentikasi Google")}
-            theme="filled_black"
-            shape="rectangular"
-            text="signup_with"
-          />
-        </div>
+        {/* Google signup — hidden for now */}
 
         <div className="mt-6 text-center text-sm text-muted-foreground">
           Sudah punya akun?{" "}

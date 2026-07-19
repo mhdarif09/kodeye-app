@@ -1,214 +1,155 @@
 'use strict';
 
-const Groq = require('groq-sdk');
-const config = require('../config/env');
 const logger = require('../utils/logger');
 
-const groq = new Groq({
-  apiKey: config.groq.apiKey,
-  timeout: 60000,
-});
-
-const MODELS = ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant'];
-const MAX_TOKENS = 1024;
-
-// ─── prompt builders ──────────────────────────────────────────────────────────
-
-const buildSystemPrompt = () => `
-You are an expert soft-skill evaluator for a developer role-play training platform.
-You will be given a chat transcript of a role-play scenario, the evaluation criteria,
-and the secret objectives for each role.
-
-YOUR RESPONSE MUST BE A SINGLE, VALID JSON OBJECT — NO markdown, NO prose, NO fences.
-
-Required JSON shape:
-{
-  "score": <integer 0-100>,
-  "breakdown": { "<criteriaName>": <integer 0-max for that criterion> },
-  "detectedSkills": ["<skill>", ...],
-  "improvements": ["<specific improvement suggestion>", ...],
-  "secretObjectiveMet": <true|false>,
-  "secretObjectiveFeedback": "<1-2 sentences on how well the secret objective was handled>"
-}
-
-Rules:
-- "score" is the weighted sum of "breakdown" values (sum of max values = 100).
-- "breakdown" keys must match the ai_criteria keys exactly.
-- "detectedSkills" are concrete soft/technical skills clearly demonstrated.
-- "improvements" must be actionable and specific (max 4 items).
-- "secretObjectiveMet" is true only if the player clearly executed the secret objective.
-`.trim();
-
-const buildUserPromptDuel = (role, briefing, secretObjective, aiCriteria, transcript, workspaceContent) => {
-  const criteriaDesc = Object.entries(aiCriteria)
-    .map(([k, v]) => `  - ${k}: max ${v} points`)
-    .join('\n');
-
-  const chatLines = transcript
-    .filter((m) => m.role === role || m.role === (role === 'role_a' ? 'role_b' : 'role_a'))
-    .map((m) => `[${m.role.toUpperCase()} | ${m.ts}]: ${m.text}`)
-    .join('\n');
-
-  const wsSection = workspaceContent
-    ? `\n## WORKSPACE OUTPUT (submitted by ${role.toUpperCase()}):\n${workspaceContent}\n`
-    : '';
-
-  return `
-## ROLE BEING EVALUATED: ${role.toUpperCase()}
-
-## ROLE BRIEFING (what this player was told):
-${briefing}
-
-## SECRET OBJECTIVE (known only to evaluator):
-${secretObjective}
-
-## EVALUATION CRITERIA (sum = 100):
-${criteriaDesc}
-
-## CHAT TRANSCRIPT:
-${chatLines || '(no messages recorded)'}
-${wsSection}
-Evaluate ${role.toUpperCase()}'s performance only. Score fairly based on the transcript evidence.
-If workspace output is present, evaluate the technical quality of the solution as well.
-`.trim();
-};
-
-const buildUserPromptCoop = (scenarioTitle, aiCriteria, secretObjA, secretObjB, transcript, workspaceContent) => {
-  const criteriaDesc = Object.entries(aiCriteria)
-    .map(([k, v]) => `  - ${k}: max ${v} points`)
-    .join('\n');
-
-  const chatLines = transcript
-    .map((m) => `[${m.role.toUpperCase()} | ${m.ts}]: ${m.text}`)
-    .join('\n');
-
-  const wsSection = workspaceContent
-    ? `\n## WORKSPACE OUTPUT:\n${typeof workspaceContent === 'string' ? workspaceContent : JSON.stringify(workspaceContent)}\n`
-    : '';
-
-  return `
-## SCENARIO: ${scenarioTitle}
-## MODE: COOPERATIVE (evaluate the team as one unit)
-
-## SECRET OBJECTIVES:
-- Role A: ${secretObjA}
-- Role B: ${secretObjB}
-
-## EVALUATION CRITERIA (sum = 100):
-${criteriaDesc}
-
-## CHAT TRANSCRIPT:
-${chatLines || '(no messages recorded)'}
-${wsSection}
-Evaluate the TEAM'S combined performance. "secretObjectiveMet" is true only if BOTH secret objectives were clearly executed.
-If workspace output is present, evaluate the technical quality of the team's solution.
-`.trim();
-};
-
-// ─── core call ────────────────────────────────────────────────────────────────
-
 /**
- * Strip markdown code fences that some models still emit despite instructions.
- *   ```json\n{...}\n```  →  {...}
+ * Heuristic-based session scorer (no external AI dependency).
+ * Scores participation, effort, session duration, and conversation balance.
  */
-const stripFences = (raw) => raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
 
-/**
- * Call Groq and return parsed JSON. Tries multiple models, retries on parse failure.
- * @param {string} userPrompt
- * @returns {Promise<object>}
- */
-const callGroq = async (userPrompt) => {
-  const baseMessages = [
-    { role: 'system', content: buildSystemPrompt() },
-    { role: 'user', content: userPrompt },
-  ];
-
-  let lastError;
-  let lastRaw = '';
-
-  for (const model of MODELS) {
-    for (let attempt = 0; attempt < 2; attempt++) {
-      try {
-        const messages = attempt === 0 ? baseMessages : [
-          ...baseMessages,
-          { role: 'assistant', content: lastRaw },
-          { role: 'user', content: 'Your previous response was not valid JSON. Return ONLY the JSON object, nothing else.' },
-        ];
-
-        const completion = await groq.chat.completions.create({
-          model,
-          max_tokens: MAX_TOKENS,
-          messages,
-        });
-        lastRaw = completion.choices[0]?.message?.content ?? '';
-
-        return JSON.parse(stripFences(lastRaw));
-      } catch (err) {
-        lastError = err;
-        if (err instanceof SyntaxError) {
-          logger.warn(`Groq JSON parse failed (model=${model}), retrying...`);
-        } else {
-          logger.warn(`Groq API call failed (model=${model})`, { error: err.message });
-        }
-      }
-    }
-  }
-
-  logger.error('All Groq models exhausted', { error: lastError?.message });
-  throw lastError || new Error('AI scoring failed after all retries');
-};
-
-// ─── public API ───────────────────────────────────────────────────────────────
-
-/**
- * Score a completed session.
- *
- * @param {object} session  - full session row (with chat_transcript already parsed)
- * @param {object} scenario - full scenario row (with ai_criteria already parsed)
- * @returns {Promise<{ userAResult, userBResult } | { teamResult }>}
- */
 const scoreSession = async (session, scenario) => {
   const {
+    id: sessionId,
     mode,
     chat_transcript: transcript = [],
+    started_at,
+    ended_at,
     user_a_role,
     user_b_role,
     workspace_content: wsContent,
   } = session;
 
   const {
-    title,
     ai_criteria,
-    role_a_briefing,
-    role_a_secret_objective,
-    role_b_briefing,
-    role_b_secret_objective,
   } = scenario;
 
+  const durationSeconds = session.duration_seconds || 600;
+  const totalDuration = started_at && ended_at
+    ? (new Date(ended_at) - new Date(started_at)) / 1000
+    : durationSeconds;
+  const durationRatio = Math.min(1, Math.max(0, totalDuration / durationSeconds));
+  const systemMessages = transcript.filter(m => m.role === 'system');
+  const chatMessages = transcript.filter(m => m.role !== 'system');
+
   if (mode === 'coop') {
-    const combinedWs = wsContent
-      ? Object.values(wsContent).filter(Boolean).join('\n\n---\n\n')
-      : null;
-    logger.info(`AI scoring (coop) | session=${session.id}`);
-    const teamResult = await callGroq(
-      buildUserPromptCoop(title, ai_criteria, role_a_secret_objective, role_b_secret_objective, transcript, combinedWs)
-    );
+    const teamResult = evaluateTeam(chatMessages, ai_criteria, durationRatio, mode);
+    logger.info(`Heuristic scoring (coop) | session=${sessionId} score=${teamResult.score}`);
     return { teamResult };
   }
 
-  // DUEL — score each player independently
-  logger.info(`AI scoring (duel) | session=${session.id} — scoring role_a`);
-  const userAResult = await callGroq(
-    buildUserPromptDuel('role_a', role_a_briefing, role_a_secret_objective, ai_criteria, transcript, wsContent?.role_a)
-  );
+  const msgsA = chatMessages.filter(m => m.role === user_a_role);
+  const msgsB = chatMessages.filter(m => m.role === user_b_role);
 
-  logger.info(`AI scoring (duel) | session=${session.id} — scoring role_b`);
-  const userBResult = await callGroq(
-    buildUserPromptDuel('role_b', role_b_briefing, role_b_secret_objective, ai_criteria, transcript, wsContent?.role_b)
-  );
+  const userAResult = evaluatePlayer(msgsA, msgsB, ai_criteria, durationRatio, mode, 'role_a');
+  const userBResult = evaluatePlayer(msgsB, msgsA, ai_criteria, durationRatio, mode, 'role_b');
 
+  logger.info(`Heuristic scoring (duel) | session=${sessionId} a=${userAResult.score} b=${userBResult.score}`);
   return { userAResult, userBResult };
+};
+
+const evaluatePlayer = (myMsgs, opponentMsgs, criteria, durationRatio, mode, role) => {
+  const myCount = myMsgs.length;
+  const totalMsgs = myCount + opponentMsgs.length;
+
+  const avgLen = myCount > 0
+    ? Math.round(myMsgs.reduce((s, m) => s + countWords(m.text), 0) / myCount)
+    : 0;
+
+  const maxWords = myCount > 0 ? Math.max(...myMsgs.map(m => countWords(m.text))) : 0;
+  const minWords = myCount > 0 ? Math.min(...myMsgs.map(m => countWords(m.text))) : 0;
+
+  const expectedMsgs = Math.max(4, Math.round(durationRatio * 10));
+
+  const msgScore = Math.min(30, Math.round((myCount / expectedMsgs) * 30));
+
+  const lenScore = avgLen >= 20 ? 30 : avgLen >= 10 ? 22 : avgLen >= 5 ? 12 : avgLen >= 2 ? 5 : 0;
+
+  const durScore = Math.round(durationRatio * 20);
+
+  const balance = totalMsgs > 0 ? myCount / totalMsgs : 0.5;
+  const balanceScore = totalMsgs >= 3 ? Math.round((1 - Math.abs(balance - 0.5) * 2) * 20) : 10;
+
+  const wordsPerMsgFactor = myCount > 0 ? Math.min(1, maxWords > 0 ? avgLen / Math.max(maxWords, 1) : 0) : 0;
+
+  let rawScore = msgScore + lenScore + durScore + balanceScore;
+  rawScore = Math.min(100, Math.max(10, rawScore));
+
+  if (myCount === 0) rawScore = 0;
+
+  const breakdown = {};
+  const totalMax = Object.values(criteria).reduce((s, v) => s + v, 0) || 100;
+  for (const [key, max] of Object.entries(criteria)) {
+    breakdown[key] = Math.round((max / totalMax) * rawScore);
+  }
+
+  const skills = buildDetectedSkills(myMsgs, avgLen);
+  const improvements = buildImprovements(myCount, avgLen, durationRatio, balance);
+
+  return {
+    score: rawScore,
+    breakdown,
+    detectedSkills: skills,
+    improvements,
+    secretObjectiveMet: false,
+    secretObjectiveFeedback: '',
+  };
+};
+
+const evaluateTeam = (chatMessages, criteria, durationRatio, mode) => {
+  const msgCount = chatMessages.length;
+  const avgLen = msgCount > 0
+    ? Math.round(chatMessages.reduce((s, m) => s + countWords(m.text), 0) / msgCount)
+    : 0;
+
+  const expectedMsgs = Math.max(6, Math.round(durationRatio * 16));
+  const msgScore = Math.min(30, Math.round((msgCount / expectedMsgs) * 30));
+  const lenScore = avgLen >= 20 ? 30 : avgLen >= 10 ? 22 : avgLen >= 5 ? 12 : 0;
+  const durScore = Math.round(durationRatio * 25);
+  const collabScore = msgCount >= expectedMsgs ? 15 : Math.round((msgCount / expectedMsgs) * 15);
+
+  let rawScore = Math.min(100, Math.max(10, msgScore + lenScore + durScore + collabScore));
+  if (msgCount === 0) rawScore = 0;
+
+  const breakdown = {};
+  const totalMax = Object.values(criteria).reduce((s, v) => s + v, 0) || 100;
+  for (const [key, max] of Object.entries(criteria)) {
+    breakdown[key] = Math.round((max / totalMax) * rawScore);
+  }
+
+  return {
+    score: rawScore,
+    breakdown,
+    detectedSkills: ['Collaboration', 'Communication'],
+    improvements: avgLen < 10 ? ['Coba kembangkan jawaban lebih detail'] : ['Pertahankan kualitas diskusi'],
+    secretObjectiveMet: false,
+    secretObjectiveFeedback: '',
+  };
+};
+
+const countWords = (text) => {
+  if (!text) return 0;
+  return text.trim().split(/\s+/).filter(Boolean).length;
+};
+
+const buildDetectedSkills = (myMsgs, avgLen) => {
+  const skills = [];
+  if (myMsgs.length >= 6) skills.push('Active Participation');
+  if (avgLen >= 20) skills.push('Detailed Communication');
+  if (avgLen >= 10 && avgLen < 20) skills.push('Concise Communication');
+  const hasCode = myMsgs.some(m => /```|`[a-z]+`/.test(m.text));
+  if (hasCode) skills.push('Technical Communication');
+  const hasQuestions = myMsgs.some(m => /\?/.test(m.text));
+  if (hasQuestions) skills.push('Inquisitive');
+  return skills.length > 0 ? skills.slice(0, 4) : ['Session Completed'];
+};
+
+const buildImprovements = (msgCount, avgLen, durationRatio, balance) => {
+  const tips = [];
+  if (msgCount < 4) tips.push('Kirim lebih banyak pesan untuk diskusi yang lebih aktif');
+  if (avgLen < 10) tips.push('Kembangkan jawaban dengan penjelasan yang lebih detail');
+  if (durationRatio < 0.5) tips.push('Manfaatkan waktu sesi lebih baik — jangan selesaikan terlalu cepat');
+  if (balance < 0.3) tips.push('Seimbangkan partisipasi agar diskusi lebih natural');
+  return tips.length > 0 ? tips.slice(0, 3) : ['Pertahankan performa — sesi berjalan dengan baik'];
 };
 
 module.exports = { scoreSession };

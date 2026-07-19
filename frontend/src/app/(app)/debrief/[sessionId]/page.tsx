@@ -329,17 +329,19 @@ export default function DebriefPage({ params }: { params: Promise<{ sessionId: s
         </div>
       </div>
 
-      {/* ── AI Score ── */}
+      {/* ── AI Score (Coming Soon) ── */}
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Penilaian AI</CardTitle>
         </CardHeader>
         <CardContent>
-          {!isScored ? (
-            <ScoringPendingState />
-          ) : (
-            <AIScoreSection feedback={debrief.myFeedback ?? { score }} score={score} />
-          )}
+          <div className="flex flex-col items-center justify-center py-8 gap-3 text-center">
+            <span className="text-3xl">🚧</span>
+            <p className="text-sm font-medium">Coming Soon</p>
+            <p className="text-xs text-muted-foreground max-w-xs">
+              Fitur penilaian AI sedang dalam pengembangan. Kamu tetap bisa lihat sesi dan referensi materi.
+            </p>
+          </div>
         </CardContent>
       </Card>
 
