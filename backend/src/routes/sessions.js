@@ -388,6 +388,8 @@ router.get('/:id/debrief', async (req, res, next) => {
         aiCriteria: session.ai_criteria,
         resourceLinks: session.resource_links,
         peerRatings,
+        skillCategory: session.skill_category || null,
+        hasProblem: !!session.has_problem,
         workspaceType: session.workspace_type || 'chat',
         workspaceContent: session.workspace_content ? parseJsonCol(session.workspace_content) : null,
         initialContent: session.initial_content ? parseJsonCol(session.initial_content) : null,

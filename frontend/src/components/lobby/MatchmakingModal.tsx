@@ -24,25 +24,27 @@ interface MatchmakingModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialMode?: "duel" | "coop";
+  initialCategory?: string;
 }
 
-export function MatchmakingModal({ isOpen, onClose, initialMode = "duel" }: MatchmakingModalProps) {
+export function MatchmakingModal({ isOpen, onClose, initialMode = "duel", initialCategory }: MatchmakingModalProps) {
   const router = useRouter();
   const { socket } = useSocket(); // connects automatically since we wrapped in provider or use directly
   
   const [mode, setMode] = useState<"duel" | "coop">(initialMode);
-  const [category, setCategory] = useState<string>("SYSTEM_DESIGN");
+  const [category, setCategory] = useState<string>(initialCategory || "SYSTEM_DESIGN");
   const [status, setStatus] = useState<"idle" | "searching" | "timeout">("idle");
   const [elapsed, setElapsed] = useState(0);
 
-  // Sync mode if initialMode changes while reopening
+  // Sync mode/category if props change while reopening
   useEffect(() => {
     if (isOpen) {
       setMode(initialMode);
+      if (initialCategory) setCategory(initialCategory);
       setStatus("idle");
       setElapsed(0);
     }
-  }, [isOpen, initialMode]);
+  }, [isOpen, initialMode, initialCategory]);
 
   // Timer effect
   useEffect(() => {
@@ -87,6 +89,17 @@ export function MatchmakingModal({ isOpen, onClose, initialMode = "duel" }: Matc
       });
       setStatus("searching");
     } catch (error: any) {
+      if (error.response?.status === 409) {
+        await api.delete("/api/matchmaking/queue").catch(() => {});
+        try {
+          await api.post("/api/matchmaking/queue", {
+            mode,
+            skillCategory: category,
+          });
+          setStatus("searching");
+          return;
+        } catch {}
+      }
       toast.error(error.response?.data?.message || "Gagal masuk antrean");
     }
   };

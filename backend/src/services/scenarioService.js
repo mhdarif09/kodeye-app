@@ -21,6 +21,10 @@ const parseJsonFields = (scenario) => {
     parsed.is_active = Boolean(parsed.is_active);
   }
   
+  if (parsed.has_problem !== undefined) {
+    parsed.has_problem = Boolean(parsed.has_problem);
+  }
+  
   return parsed;
 };
 

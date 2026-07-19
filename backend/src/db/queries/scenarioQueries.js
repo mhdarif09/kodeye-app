@@ -17,6 +17,10 @@ const findAll = async (filters) => {
     conditions.push('mode = ?');
     values.push(filters.mode);
   }
+  if (filters.skill_category) {
+    conditions.push('skill_category = ?');
+    values.push(filters.skill_category);
+  }
   if (filters.is_active !== undefined) {
     conditions.push('is_active = ?');
     values.push(filters.is_active);

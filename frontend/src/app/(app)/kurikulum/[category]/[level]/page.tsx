@@ -41,6 +41,15 @@ const CATEGORY_LABELS: Record<string, string> = {
   "stakeholder-management": "Stakeholder Management",
 };
 
+const CATEGORY_TO_SKILL: Record<string, string> = {
+  "system-design": "SYSTEM_DESIGN",
+  debugging: "DEBUGGING",
+  "interview-prep": "INTERVIEW_PREP",
+  "technical-communication": "TECHNICAL_COMMUNICATION",
+  negotiation: "NEGOTIATION",
+  "stakeholder-management": "STAKEHOLDER_MANAGEMENT",
+};
+
 export default function LevelReaderPage() {
   const { category, level } = useParams<{ category: string; level: string }>();
   const router = useRouter();
@@ -161,6 +170,18 @@ export default function LevelReaderPage() {
               <span className="bg-muted/50 px-2 py-0.5 rounded-md font-medium">{catName}</span>
               <span className="text-border">·</span>
               <span className="bg-muted/50 px-2 py-0.5 rounded-md font-medium">Level {item.level_number}</span>
+              {item.mode !== "solo" && (
+                <>
+                  <span className="text-border">·</span>
+                  <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                    item.mode === "duel"
+                      ? "bg-orange-500/10 text-orange-500 border border-orange-500/20"
+                      : "bg-blue-500/10 text-blue-500 border border-blue-500/20"
+                  }`}>
+                    {item.mode === "duel" ? "⚔️ Duel" : "🤝 Co-op"}
+                  </span>
+                </>
+              )}
               {item.access !== "free" && (
                 <>
                   <span className="text-border">·</span>
@@ -314,6 +335,7 @@ export default function LevelReaderPage() {
         isOpen={matchModal}
         onClose={() => setMatchModal(false)}
         initialMode={matchMode}
+        initialCategory={CATEGORY_TO_SKILL[category] || undefined}
       />
     </div>
   );

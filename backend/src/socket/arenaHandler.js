@@ -22,7 +22,8 @@ const getSessionWithScenario = async (sessionId) => {
         sc.role_a_briefing, sc.role_a_secret_objective,
         sc.role_b_briefing, sc.role_b_secret_objective,
         sc.ai_criteria, sc.resource_links, sc.tags,
-        sc.workspace_type, sc.initial_content
+        sc.workspace_type, sc.initial_content,
+        sc.skill_category, sc.has_problem
      FROM sessions s
      LEFT JOIN scenarios sc ON s.scenario_id = sc.id
      WHERE s.id = ?`,
@@ -149,22 +150,25 @@ const runScoringAsync = async (io, sessionId) => {
       // Re-read updated scores from DB to be safe (avoids stale closure values)
       try {
         const [[fresh]] = await pool.query(
-          'SELECT user_a_score, user_b_score, category FROM sessions s LEFT JOIN scenarios sc ON s.scenario_id = sc.id WHERE s.id = ?',
+          'SELECT user_a_score, user_b_score, category, skill_category FROM sessions s LEFT JOIN scenarios sc ON s.scenario_id = sc.id WHERE s.id = ?',
           [sessionId]
         );
         if (fresh) {
-          // Map scenario category slug back to SKILL_CATEGORIES enum key used in elo_ratings JSON
           const { SKILL_CATEGORIES } = require('../utils/constants');
-          const categorySlugToEnum = {
-            'architecture':            'SYSTEM_DESIGN',
-            'technical-communication': 'TECHNICAL_COMMUNICATION',
-            'debugging':               'DEBUGGING',
-            'negotiation':             'NEGOTIATION',
-            'stakeholder-management':  'STAKEHOLDER_MANAGEMENT',
-            'career-growth':           'MENTORING',
-            'interview-prep':          'INTERVIEW_PREP',
-          };
-          const skillCategory = categorySlugToEnum[fresh.category] ?? fresh.category?.toUpperCase();
+          // Prefer skill_category column (set by seed runner), fall back to slug mapping
+          let skillCategory = fresh.skill_category;
+          if (!skillCategory || !SKILL_CATEGORIES.includes(skillCategory)) {
+            const categorySlugToEnum = {
+              'architecture':            'SYSTEM_DESIGN',
+              'technical-communication': 'TECHNICAL_COMMUNICATION',
+              'debugging':               'DEBUGGING',
+              'negotiation':             'NEGOTIATION',
+              'stakeholder-management':  'STAKEHOLDER_MANAGEMENT',
+              'career-growth':           'MENTORING',
+              'interview-prep':          'INTERVIEW_PREP',
+            };
+            skillCategory = categorySlugToEnum[fresh.category] ?? fresh.category?.toUpperCase();
+          }
           if (SKILL_CATEGORIES.includes(skillCategory)) {
             const eloRow = { user_a_id, user_b_id, user_a_score: fresh.user_a_score, user_b_score: fresh.user_b_score };
             await eloService.processEloForSession(eloRow, skillCategory);
@@ -235,6 +239,8 @@ const registerArenaHandler = (io, socket) => {
         isBotOpponent,
         workspaceType,
         initialContent,
+        skillCategory: session.skill_category || null,
+        hasProblem: !!session.has_problem,
       });
 
       logger.info(`arena:join | user=${userId} role=${role} session=${sessionId}`);

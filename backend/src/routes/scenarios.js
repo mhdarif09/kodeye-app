@@ -5,11 +5,12 @@ const router = express.Router();
 
 router.get('/', async (req, res, next) => {
   try {
-    const { category, difficulty, mode } = req.query;
+    const { category, difficulty, mode, skill_category } = req.query;
     const filters = {};
     if (category) filters.category = category;
     if (difficulty) filters.difficulty = difficulty;
     if (mode) filters.mode = mode;
+    if (skill_category) filters.skill_category = skill_category;
 
     const scenarios = await scenarioService.getScenarios(filters);
     res.status(200).json({ data: scenarios });

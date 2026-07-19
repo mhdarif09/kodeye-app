@@ -731,5 +731,59 @@
       "problem": "Design the multi-tenant database architecture for a SaaS e-commerce platform. Show your chosen approach and why.",
       "template": "flowchart TB\n    subgraph Tenants[Tenants]\n        T1[Store A\n        50K products]\n        T2[Store B\n        200K products]\n        T3[Store C\n        5K products]\n    end\n\n    subgraph Options[Architecture Options]\n        O1[\"Option A:\n        Database per Tenant\"]\n        O2[\"Option B:\n        Shared DB + tenant_id\"]\n        O3[\"Option C:\n        Schema per Tenant\"]\n    end\n\n    %% TODO: Draw your chosen architecture\n    %% Show the data flow, isolation boundaries,\n    %% backup strategy, connection pooling\n    T1 --> O1\n    T2 --> O2\n    T3 --> O1"
     }
+  },
+  {
+    "title": "The Mentoring Session",
+    "mode": "duel",
+    "category": "career-growth",
+    "difficulty": "intermediate",
+    "tags": ["mentoring", "junior-development", "pair-programming", "knowledge-transfer"],
+    "role_a_briefing": "You're a Junior Developer who just joined the team 2 months ago. You're struggling with a feature: implementing a caching layer for the product API.\n\nYou've read the docs on Redis but you're unsure:\n- When to cache vs when to fetch fresh\n- How to handle cache invalidation\n- What TTL to use\n- How to avoid caching stale data\n\nYour Senior Developer mentor is available for 10 minutes. You need to ask focused questions that show you've done your homework. Don't just ask \"how do I cache?\" — be specific about what you've tried and where you're stuck.",
+    "role_a_secret_objective": "Start with: 'I've read about Cache-Aside pattern and Write-Through. For our product API where data updates 3x a day but is read 10,000x an hour, I think Cache-Aside is better. But I'm worried about the cache stampede problem at peak traffic. What do you think?' This shows you've done research and just need validation.",
+    "role_b_briefing": "You're a Senior Developer mentoring a junior. They're implementing caching for the first time.\n\nThey've read the docs but lack practical experience. Your job is not to give them the answer — it's to guide them to the right solution by asking questions:\n\n- 'What's the read/write ratio on this endpoint?'\n- 'What's the cost of serving stale data for 5 seconds? 5 minutes?'\n- 'How would you test if your cache is working?'\n- 'What happens if Redis goes down?'\n\nUse the Socratic method. Make them think, not just code.",
+    "role_b_secret_objective": "At the end, ask: 'What would you do differently if you were designing this for a startup vs a bank?' This tests whether they understand that architecture depends on context, not just best practices. A startup can tolerate some stale data; a bank cannot.",
+    "ai_criteria": {
+      "preparation_and_research": 25,
+      "question_quality": 25,
+      "learning_velocity": 20,
+      "knowledge_application": 15,
+      "mentoring_chemistry": 15
+    },
+    "resource_links": [
+      { "title": "Cache-Aside Pattern", "url": "https://docs.microsoft.com/en-us/azure/architecture/patterns/cache-aside", "type": "article" },
+      { "title": "Redis Caching Best Practices", "url": "https://redis.io/docs/manual/patterns/caching/", "type": "article" }
+    ],
+    "role_a_name": "Junior Developer",
+    "role_b_name": "Senior Mentor"
+  },
+  {
+    "title": "The System Design Sprint",
+    "mode": "coop",
+    "category": "architecture",
+    "difficulty": "advanced",
+    "tags": ["system-design", "real-time", "collaboration", "architecture-review"],
+    "role_a_briefing": "You and your partner (Infrastructure Engineer) need to design a real-time collaborative code editor (like Google Docs for code) within 10 minutes.\n\nRequirements:\n- Multiple users edit the same file simultaneously\n- Changes sync in real-time (target: <200ms latency)\n- Support 50 concurrent users per document\n- Handle conflicts (two people edit the same line)\n- Show who's editing what (cursors, selections)\n\nYou'll present your design together. Focus on:\n1. Architecture overview (clients, server, database)\n2. Conflict resolution strategy (OT vs CRDT)\n3. Scalability considerations\n4. What you'd prototype first",
+    "role_a_secret_objective": "At minute 5, ask your partner: 'Should we use Operational Transformation (OT) or CRDTs for conflict resolution?' Then lead the discussion: 'OT is battle-tested (Google Docs uses it) but complex. CRDTs are simpler but use more memory. For 50 users, I think CRDTs are the right fit.' Show that you can evaluate trade-offs on the fly.",
+    "role_b_briefing": "Your partner (System Designer) wants to design a real-time collaborative code editor. You're the Infrastructure Engineer who needs to make it work at scale.\n\nKey concerns you bring:\n- WebSocket connections: 50 users × multiple documents = connection management\n- Persistence: How often do we save? What if a user disconnects?\n- Deployment: Where do WebSocket servers go? How do they scale?\n- Monitoring: How do we detect sync failures or high latency?\n\nDon't just agree — challenge your partner on scalability. A design that works for 50 users should be able to scale to 500.",
+    "role_b_secret_objective": "Bring up the 'offline editing' edge case: 'What if a user edits while on a plane with no internet? When they reconnect, how do we merge their changes?' This is a common challenge in collaborative editors. A good design anticipates offline scenarios.",
+    "ai_criteria": {
+      "architecture_coherence": 25,
+      "conflict_resolution_understanding": 25,
+      "scalability_awareness": 20,
+      "real_time_tradeoffs": 20,
+      "collaboration_quality": 10
+    },
+    "resource_links": [
+      { "title": "CRDT vs OT: A Comparison", "url": "https://www.tiny.cloud/blog/operational-transformation-crdt/", "type": "article" },
+      { "title": "How Google Docs Handles Conflict Resolution", "url": "https://www.youtube.com/watch?v=0H3iY4QhGnI", "type": "video" },
+      { "title": "WebSocket Scaling Patterns", "url": "https://www.ably.io/blog/websocket-scaling-patterns", "type": "article" }
+    ],
+    "role_a_name": "System Designer",
+    "role_b_name": "Infrastructure Engineer",
+    "workspace_type": "diagram",
+    "initial_content": {
+      "problem": "Design a real-time collaborative code editor for 50 concurrent users per document. Show the architecture, conflict resolution approach, and scaling strategy.",
+      "template": "flowchart TB\n    subgraph Users[Users]\n        U1[User A\n        Developer]\n        U2[User B\n        Developer]\n        U3[User C\n        Reviewer]\n    end\n\n    subgraph RealTime[Real-Time Layer]\n        WS[WebSocket Server\n        Socket.IO]\n        OT[Conflict Resolution\n        CRDT / OT]\n    end\n\n    subgraph Storage[Persistence]\n        DB[(PostgreSQL\n        Document Store)]\n        CACHE[Redis\n        Ephemeral State]\n    end\n\n    %% TODO: Complete the architecture\n    %% Show how users connect, how edits flow,\n    %% how conflicts are resolved, how state persists\n    U1 --> WS\n    U2 --> WS\n    U3 --> WS\n    WS --> OT\n    OT --> DB\n    OT --> CACHE\n\n    %% Add more components:\n    %% - Load balancer for WebSocket servers\n    %% - Document service for managing versions\n    %% - Presence service for showing active users\n    %% - History service for undo/redo"
+    }
   }
 ]

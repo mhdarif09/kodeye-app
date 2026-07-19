@@ -12,6 +12,16 @@ const generateSlug = (title) => {
     .replace(/(^-|-$)+/g, '');
 };
 
+const categoryToSkill = {
+  'architecture':            'SYSTEM_DESIGN',
+  'technical-communication': 'TECHNICAL_COMMUNICATION',
+  'debugging':               'DEBUGGING',
+  'negotiation':             'NEGOTIATION',
+  'stakeholder-management':  'STAKEHOLDER_MANAGEMENT',
+  'career-growth':           'MENTORING',
+  'interview-prep':          'INTERVIEW_PREP',
+};
+
 const runSeed = async () => {
   try {
     logger.info('Starting scenario seeding...');
@@ -29,16 +39,23 @@ const runSeed = async () => {
 
       const existing = await scenarioQueries.findBySlug(slug);
 
+      const skillCategory = categoryToSkill[scenario.category] || null;
+      const hasProblem = !!(scenario.initial_content && scenario.initial_content.problem);
+
       if (existing) {
-        // Update existing scenario with new fields (workspace, etc.)
+        // Update existing scenario with new fields (workspace, skill_category, has_problem, etc.)
         await pool.query(
           `UPDATE scenarios SET
             workspace_type = ?,
-            initial_content = ?
+            initial_content = ?,
+            skill_category = ?,
+            has_problem = ?
           WHERE id = ?`,
           [
             scenario.workspace_type || 'chat',
             scenario.initial_content ? JSON.stringify(scenario.initial_content) : null,
+            skillCategory,
+            hasProblem,
             existing.id,
           ]
         );
@@ -64,6 +81,8 @@ const runSeed = async () => {
         resource_links: JSON.stringify(scenario.resource_links),
         workspace_type: scenario.workspace_type || 'chat',
         initial_content: scenario.initial_content ? JSON.stringify(scenario.initial_content) : null,
+        skill_category: skillCategory,
+        has_problem: hasProblem,
       };
 
       await scenarioQueries.insertScenario(scenarioData);
