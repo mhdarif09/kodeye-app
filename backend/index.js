@@ -8,7 +8,6 @@ const cookieParser = require('cookie-parser');
 const hpp = require('hpp');
 const mongoSanitize = require('express-mongo-sanitize');
 const morgan = require('morgan');
-const rateLimit = require('express-rate-limit');
 
 const config = require('./src/config/env');
 const logger = require('./src/utils/logger');
@@ -95,19 +94,6 @@ app.post('/api/payment/notification', async (req, res, next) => {
 
 // Auth routes mounted BEFORE global limiter (no rate limit on auth)
 app.use('/api/auth', authRoutes);
-
-// Global Rate Limiter for /api routes (excludes auth)
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 300, // Limit each IP to 300 requests per 15 minutes (~1 req / 3s on average)
-  message: {
-    error: {
-      message: 'Too many requests, please try again later.',
-      code: 'RATE_LIMIT_EXCEEDED',
-    },
-  },
-});
-app.use('/api', apiLimiter);
 
 app.use('/api/users', userRoutes);
 app.use('/api/scenarios', scenarioRoutes);
