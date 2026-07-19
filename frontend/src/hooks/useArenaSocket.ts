@@ -18,7 +18,9 @@ export interface ArenaState {
   status: string;
   role: string;
   briefing: string;
+  briefingEn: string;
   scenarioTitle: string;
+  scenarioTitleEn: string;
   mode: string;
   durationSeconds: number;
   startedAt?: string;
@@ -40,7 +42,9 @@ export const useArenaSocket = (sessionId: string) => {
     status: "waiting",
     role: "",
     briefing: "",
+    briefingEn: "",
     scenarioTitle: "",
+    scenarioTitleEn: "",
     mode: "",
     durationSeconds: 0,
     messages: [],
@@ -65,7 +69,9 @@ export const useArenaSocket = (sessionId: string) => {
         isJoined: true,
         role: data.role,
         briefing: data.briefing,
+        briefingEn: data.briefingEn || data.briefing,
         scenarioTitle: data.scenarioTitle,
+        scenarioTitleEn: data.scenarioTitleEn || data.scenarioTitle,
         mode: data.mode,
         durationSeconds: data.durationSeconds,
         status: data.status,

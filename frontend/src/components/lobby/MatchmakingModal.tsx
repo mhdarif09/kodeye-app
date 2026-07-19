@@ -30,13 +30,17 @@ interface MatchBriefingData {
   sessionId: string;
   role: string;
   roleName: string;
+  roleNameEn: string;
   briefing: string;
+  briefingEn: string;
   scenarioTitle: string;
+  scenarioTitleEn: string;
   category: string;
   difficulty: string;
   mode: string;
   durationSeconds: number;
   problem: string | null;
+  problemEn: string | null;
   template: string | null;
   templateLanguage: string | null;
 }
@@ -58,6 +62,7 @@ export function MatchmakingModal({ isOpen, onClose, initialMode = "duel", initia
   const [status, setStatus] = useState<"idle" | "searching" | "timeout" | "briefing" | "waiting_partner">("idle");
   const [elapsed, setElapsed] = useState(0);
   const [briefing, setBriefing] = useState<MatchBriefingData | null>(null);
+  const [locale, setLocale] = useState<"id" | "en">("id");
 
   // Sync mode/category if props change while reopening
   useEffect(() => {
@@ -224,9 +229,17 @@ export function MatchmakingModal({ isOpen, onClose, initialMode = "duel", initia
 
       {status === "briefing" && briefing && (
         <div className="flex flex-col space-y-6">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold tracking-tight">MATCH DITEMUKAN</h2>
-            <p className="text-sm text-muted-foreground mt-1">Baca briefing sebelum memulai sesi</p>
+          <div className="flex items-center justify-between">
+            <div className="text-center flex-1">
+              <h2 className="text-2xl font-bold tracking-tight">MATCH DITEMUKAN</h2>
+              <p className="text-sm text-muted-foreground mt-1">Baca briefing sebelum memulai sesi</p>
+            </div>
+            <button
+              onClick={() => setLocale((l) => (l === "id" ? "en" : "id"))}
+              className="text-xs px-2 py-1 rounded border border-border hover:bg-secondary/50 transition shrink-0"
+            >
+              {locale === "id" ? "EN" : "ID"}
+            </button>
           </div>
 
           <div className="space-y-4">
@@ -243,18 +256,18 @@ export function MatchmakingModal({ isOpen, onClose, initialMode = "duel", initia
 
             <div className="bg-secondary/30 rounded-md p-3">
               <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Skenario</span>
-              <p className="font-medium">{briefing.scenarioTitle}</p>
+              <p className="font-medium">{locale === "id" ? briefing.scenarioTitle : briefing.scenarioTitleEn}</p>
             </div>
 
             <div className="bg-primary/10 border border-primary/20 rounded-md p-3">
               <span className="text-[10px] uppercase tracking-wider font-semibold text-primary">Peran Kamu</span>
-              <p className="font-semibold text-base">{briefing.roleName}</p>
+              <p className="font-semibold text-base">{locale === "id" ? briefing.roleName : briefing.roleNameEn}</p>
             </div>
 
             <div>
               <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Briefing</span>
               <div className="mt-1 text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap bg-secondary/30 rounded-md p-3 border border-border">
-                {briefing.briefing}
+                {locale === "id" ? briefing.briefing : briefing.briefingEn}
               </div>
             </div>
 
@@ -262,7 +275,7 @@ export function MatchmakingModal({ isOpen, onClose, initialMode = "duel", initia
               <div>
                 <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Soal</span>
                 <div className="mt-1 text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap bg-secondary/30 rounded-md p-3 border border-border">
-                  <p className="mb-2">{briefing.problem}</p>
+                  <p className="mb-2">{locale === "id" ? briefing.problem : briefing.problemEn}</p>
                   {briefing.template && (
                     <pre className="text-xs bg-background/80 rounded p-3 overflow-x-auto border border-border">
                       <code>{briefing.template}</code>

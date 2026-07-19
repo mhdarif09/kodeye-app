@@ -219,11 +219,17 @@ ${ic.template || ''}
     category,
     difficulty: scenario.difficulty,
     scenarioTitle: scenario.title_id || scenario.title,
+    scenarioTitleEn: scenario.title || scenario.title_id,
     roleAName: scenario.role_a_name_id || scenario.role_a_name,
+    roleANameEn: scenario.role_a_name || scenario.role_a_name_id,
     roleBName: scenario.role_b_name_id || scenario.role_b_name,
+    roleBNameEn: scenario.role_b_name || scenario.role_b_name_id,
     briefingA: scenario.role_a_briefing_id || scenario.role_a_briefing,
+    briefingAEn: scenario.role_a_briefing || scenario.role_a_briefing_id,
     briefingB: scenario.role_b_briefing_id || scenario.role_b_briefing,
+    briefingBEn: scenario.role_b_briefing || scenario.role_b_briefing_id,
     problem: ic?.problem || null,
+    problemEn: ic?.problem || null,
     template: ic?.template || null,
     templateLanguage: ic?.language || scenario.workspace_type || null,
     durationSeconds: scenario.duration_seconds,
@@ -293,24 +299,28 @@ const findMatch = async () => {
       if (!matchData) continue; // scenario not found
 
       if (_io) {
-        const emitBriefing = (userId, role, roleName, briefing) => {
+        const emitBriefing = (userId, role, roleName, roleNameEn, briefing, briefingEn) => {
           _io.to(`user:${userId}`).emit('match_briefing', {
             sessionId: matchData.sessionId,
             role,
             roleName,
+            roleNameEn,
             briefing,
+            briefingEn,
             scenarioTitle: matchData.scenarioTitle,
+            scenarioTitleEn: matchData.scenarioTitleEn,
             category: matchData.category,
             difficulty: matchData.difficulty,
             mode: matchData.mode,
             durationSeconds: matchData.durationSeconds,
             problem: matchData.problem,
+            problemEn: matchData.problemEn,
             template: matchData.template,
             templateLanguage: matchData.templateLanguage,
           });
         };
-        emitBriefing(matchData.userA.userId, 'role_a', matchData.roleAName, matchData.briefingA);
-        emitBriefing(matchData.userB.userId, 'role_b', matchData.roleBName, matchData.briefingB);
+        emitBriefing(matchData.userA.userId, 'role_a', matchData.roleAName, matchData.roleANameEn, matchData.briefingA, matchData.briefingAEn);
+        emitBriefing(matchData.userB.userId, 'role_b', matchData.roleBName, matchData.roleBNameEn, matchData.briefingB, matchData.briefingBEn);
       }
     }
   } catch (err) {

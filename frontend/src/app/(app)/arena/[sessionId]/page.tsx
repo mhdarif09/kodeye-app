@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { use } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
@@ -39,7 +39,9 @@ export default function ArenaPage({ params }: { params: Promise<{ sessionId: str
     problem,
     problemTemplate,
     templateLanguage,
+    scenarioTitleEn,
   } = arenaState;
+  const [locale, setLocale] = useState<"id" | "en">("id");
 
   useEffect(() => {
     if (isTimeout) {
@@ -82,14 +84,20 @@ export default function ArenaPage({ params }: { params: Promise<{ sessionId: str
             </svg>
           </button>
           <div>
-            <h1 className="text-sm font-semibold leading-tight">{scenarioTitle}</h1>
+            <h1 className="text-sm font-semibold leading-tight">{locale === "id" ? scenarioTitle : scenarioTitleEn}</h1>
             <p className="text-[10px] text-muted-foreground capitalize">
               {mode === "duel" ? "⚔️ Duel" : "🤝 Co-op"} · {role === "role_a" ? "Peran A" : "Peran B"}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setLocale((l) => (l === "id" ? "en" : "id"))}
+            className="text-xs px-2 py-1 rounded border border-border hover:bg-secondary/50 transition"
+          >
+            {locale === "id" ? "EN" : "ID"}
+          </button>
           {isStarted && (
             <Timer startedAt={startedAt} durationSeconds={durationSeconds} />
           )}

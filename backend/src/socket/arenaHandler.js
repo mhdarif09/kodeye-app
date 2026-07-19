@@ -45,9 +45,17 @@ const getSessionWithScenario = async (sessionId) => {
  */
 const filterBriefingForRole = (session, role) => {
   if (role === 'role_a') {
-    return { role: 'role_a', briefing: session.role_a_briefing_id || session.role_a_briefing };
+    return {
+      role: 'role_a',
+      briefing: session.role_a_briefing_id || session.role_a_briefing,
+      briefingEn: session.role_a_briefing || session.role_a_briefing_id,
+    };
   }
-  return { role: 'role_b', briefing: session.role_b_briefing_id || session.role_b_briefing };
+  return {
+    role: 'role_b',
+    briefing: session.role_b_briefing_id || session.role_b_briefing,
+    briefingEn: session.role_b_briefing || session.role_b_briefing_id,
+  };
 };
 
 /** Determine which role a userId holds in the session. Returns null if not a participant. */
@@ -279,6 +287,7 @@ const registerArenaHandler = (io, socket) => {
         sessionId,
         role: myBriefing.role,
         briefing: myBriefing.briefing,
+        briefingEn: myBriefing.briefingEn,
         scenarioTitle: session.title_id || session.scenario_title,
         scenarioTitleEn: session.scenario_title,
         mode: session.mode,
