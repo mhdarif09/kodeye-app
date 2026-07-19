@@ -7,7 +7,6 @@ interface BriefingPanelProps {
   role: string;
   scenarioTitle: string;
   briefing: string;
-  secretObjective?: string;
   mode: string;
   isCollapsed?: boolean;
   onToggle?: () => void;
@@ -22,7 +21,6 @@ export function BriefingPanel({
   role,
   scenarioTitle,
   briefing,
-  secretObjective,
   mode,
   isCollapsed = false,
   onToggle,
@@ -74,20 +72,8 @@ export function BriefingPanel({
             </div>
           </div>
 
-          {/* Secret objective */}
-          {secretObjective && (
-            <div>
-              <p className="text-[10px] uppercase tracking-wider font-semibold text-amber-500 mb-2">
-                🔐 Objective Rahasia
-              </p>
-              <div className="text-sm text-amber-500/90 leading-relaxed whitespace-pre-wrap bg-amber-500/5 rounded-md p-3 border border-amber-500/20">
-                {secretObjective}
-              </div>
-            </div>
-          )}
-
           <p className="text-[10px] text-muted-foreground italic pt-2">
-            * Jangan bocorkan objective rahasiamu ke lawan!
+            * Jangan bocorkan detail briefing kamu ke lawan!
           </p>
         </div>
       )}

@@ -35,7 +35,6 @@ export default function ArenaPage({ params }: { params: Promise<{ sessionId: str
     isStarted,
     role,
     briefing,
-    secretObjective,
     scenarioTitle,
     mode,
     durationSeconds,
@@ -85,7 +84,6 @@ export default function ArenaPage({ params }: { params: Promise<{ sessionId: str
           scenarioTitle={scenarioTitle}
           role={role}
           briefing={briefing}
-          secretObjective={secretObjective}
           onReady={handleReady}
           isWaiting={isReadyWaiting}
         />
@@ -127,7 +125,6 @@ export default function ArenaPage({ params }: { params: Promise<{ sessionId: str
           role={role}
           scenarioTitle={scenarioTitle}
           briefing={briefing}
-          secretObjective={secretObjective}
           mode={mode}
           isCollapsed={isBriefingCollapsed}
           onToggle={() => setIsBriefingCollapsed((v) => !v)}

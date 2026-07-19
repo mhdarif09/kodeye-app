@@ -4,7 +4,10 @@ const Groq = require('groq-sdk');
 const config = require('../config/env');
 const logger = require('../utils/logger');
 
-const groq = new Groq({ apiKey: config.groq.apiKey });
+const groq = new Groq({
+  apiKey: config.groq.apiKey,
+  timeout: 30000, // 30s — don't let a slow API response hang the scoring forever
+});
 
 // Model note: llama-3.3-70b-versatile supports response_format json_object on Groq.
 // If Groq adds llama-4 or a newer 70B+ variant in future, swap MODEL constant here.

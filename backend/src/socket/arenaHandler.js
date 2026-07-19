@@ -9,14 +9,14 @@ const aiBotService = require('../services/aiBotService');
 // ─── briefing formatter for PvP sessions ──────────────────────────────────────
 
 /**
- * Build a system-briefing message shown in chat when a PvP session starts.
+ * Build a private briefing shown ONLY to each participant when a PvP session starts.
  * Each user gets ONLY their own role's briefing — never the opponent's.
  * Secret objectives are NEVER included (used only during AI scoring).
+ * Artifact block (problem/template) is NOT included here; it's broadcast to the shared room separately.
  */
 const formatBriefingMessage = (session, role) => {
   const isRoleA = role === 'role_a';
   const roleName = isRoleA ? (session.role_a_name || 'Peran A') : (session.role_b_name || 'Peran B');
-  const opponentName = isRoleA ? (session.role_b_name || 'Peran B') : (session.role_a_name || 'Peran A');
   const briefing = isRoleA ? session.role_a_briefing : session.role_b_briefing;
   const difficultyLabels = { beginner: 'Pemula', intermediate: 'Menengah', advanced: 'Lanjutan' };
   const difficulty = difficultyLabels[session.difficulty] || session.difficulty || '-';
@@ -26,18 +26,42 @@ const formatBriefingMessage = (session, role) => {
   text += `\n\n---\n\n`;
   text += `**Peran kamu: ${roleName}**\n\n${briefing}`;
 
-  if (session.has_problem && session.initial_content) {
-    const problem = typeof session.initial_content === 'object'
-      ? session.initial_content.problem
-      : null;
-    if (problem) {
-      text += `\n\n---\n\n**🗂️ Problem:**\n${problem}`;
-    }
-  }
+  return text;
+};
 
-  text += `\n\n---\n\n*Kamu berpasangan dengan user lain yang memainkan peran **${opponentName}** — dia tidak tahu briefing kamu, kamu juga tidak tahu briefing dia. Tetap in-character selama sesi. Semangat!*`;
+/**
+ * Build the artifact block broadcast to the shared session room when workspace_type is present.
+ */
+const formatArtifactBlock = (session) => {
+  const content = session.initial_content;
+  if (!content) return null;
+
+  const problem = content.problem || '';
+  const lang = content.language || session.workspace_type || '';
+  const template = content.template || '';
+  const langTag = lang ? lang : '';
+
+  let text = `**🗂️ Problem:**\n${problem}\n\n`;
+  text +='```' + langTag + '\n' + template + '\n```';
 
   return text;
+};
+
+/**
+ * Build the "who goes first" hint broadcast to the shared session room after briefings.
+ */
+const formatStartHint = (session) => {
+  const aName = session.role_a_name || 'Peran A';
+  const bName = session.role_b_name || 'Peran B';
+
+  if (session.workspace_type) {
+    return `${aName}, silakan mulai analisis/kerjakan problem di atas dan share progress kamu di chat.`;
+  }
+  if (session.mode === 'coop') {
+    return `${aName} dan ${bName}, silakan mulai diskusi untuk menyelesaikan situasi ini bersama.`;
+  }
+  // duel
+  return `${aName}, silakan mulai percakapan sesuai skenario kamu.`;
 };
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
@@ -68,21 +92,14 @@ const getSessionWithScenario = async (sessionId) => {
 
 /**
  * Return only the briefing fields the requesting user is allowed to see.
- * Never leak the opponent's briefing — scenario integrity depends on this.
+ * Never leak the opponent's briefing or any secret objective to the client.
+ * Secret objectives are server-side only, used solely in the judge/verdict step.
  */
 const filterBriefingForRole = (session, role) => {
   if (role === 'role_a') {
-    return {
-      role: 'role_a',
-      briefing: session.role_a_briefing,
-      secretObjective: session.role_a_secret_objective,
-    };
+    return { role: 'role_a', briefing: session.role_a_briefing };
   }
-  return {
-    role: 'role_b',
-    briefing: session.role_b_briefing,
-    secretObjective: session.role_b_secret_objective,
-  };
+  return { role: 'role_b', briefing: session.role_b_briefing };
 };
 
 /** Determine which role a userId holds in the session. Returns null if not a participant. */
@@ -217,6 +234,56 @@ const runScoringAsync = async (io, sessionId) => {
     logger.info(`AI scoring complete | session=${sessionId}`);
   } catch (err) {
     logger.error(`AI scoring failed | session=${sessionId}`, { error: err.message });
+
+    // ── fallback: write a graceful error so the UI doesn't hang forever ──
+    const fallback = {
+      score: 0,
+      criteria: {},
+      detectedSkills: [],
+      improvements: [],
+      secretObjectiveMet: false,
+      summary: 'Maaf, penilaian AI gagal diproses. Silakan coba lagi nanti.',
+    };
+    try {
+      const [[fallbackRow]] = await pool.query(
+        'SELECT mode, user_a_id, user_b_id FROM sessions WHERE id = ?', [sessionId]
+      );
+      if (fallbackRow) {
+        if (fallbackRow.mode === 'coop') {
+          await pool.query(
+            'UPDATE sessions SET team_score = ?, team_ai_feedback = ? WHERE id = ?',
+            [0, JSON.stringify(fallback), sessionId]
+          );
+        } else {
+          await pool.query(
+            `UPDATE sessions SET
+               user_a_score = ?, user_a_ai_feedback = ?,
+               user_b_score = ?, user_b_ai_feedback = ?
+             WHERE id = ?`,
+            [0, JSON.stringify(fallback), 0, JSON.stringify(fallback), sessionId]
+          );
+        }
+        // Notify personal rooms (both users) so debrief page stops polling
+        if (fallbackRow.mode === 'coop') {
+          io.to(`session:${sessionId}`).emit('arena:scored', {
+            sessionId, mode: 'coop', teamResult: fallback,
+          });
+        } else {
+          if (fallbackRow.user_a_id) {
+            io.to(`user:${fallbackRow.user_a_id}`).emit('arena:scored', {
+              sessionId, mode: 'duel', myResult: fallback,
+            });
+          }
+          if (fallbackRow.user_b_id) {
+            io.to(`user:${fallbackRow.user_b_id}`).emit('arena:scored', {
+              sessionId, mode: 'duel', myResult: fallback,
+            });
+          }
+        }
+      }
+    } catch (fbErr) {
+      logger.error(`Fallback score write failed | session=${sessionId}`, { error: fbErr.message });
+    }
   }
 };
 
@@ -261,7 +328,6 @@ const registerArenaHandler = (io, socket) => {
         sessionId,
         role: myBriefing.role,
         briefing: myBriefing.briefing,
-        secretObjective: myBriefing.secretObjective,
         scenarioTitle: session.scenario_title,
         mode: session.mode,
         durationSeconds: session.duration_seconds,
@@ -326,8 +392,9 @@ const registerArenaHandler = (io, socket) => {
           isBotOpponent: isBotSession,
         });
 
-        // ── send private briefing to each user (PvP only) ───────────────────
+        // ── shared system messages (PvP only; bot sessions rely on existing flow) ──
         if (!isBotSession) {
+          // 1. Private briefing per role (sent to each user's personal room)
           const briefingA = formatBriefingMessage(session, 'role_a');
           const briefingB = formatBriefingMessage(session, 'role_b');
 
@@ -345,6 +412,24 @@ const registerArenaHandler = (io, socket) => {
               text: briefingB,
             });
           }
+
+          // 2. Artifact block (broadcast to shared room once, if workspace exists)
+          if (session.workspace_type && session.workspace_type !== 'chat') {
+            const artifactText = formatArtifactBlock(session);
+            if (artifactText) {
+              io.to(`session:${sessionId}`).emit('arena:artifact', {
+                sessionId,
+                text: artifactText,
+              });
+            }
+          }
+
+          // 3. Start hint (broadcast to shared room once)
+          const hintText = formatStartHint(session);
+          io.to(`session:${sessionId}`).emit('arena:hint', {
+            sessionId,
+            text: hintText,
+          });
         }
 
         logger.info(`arena:started | session=${sessionId} durationSeconds=${session.duration_seconds}`);

@@ -7,7 +7,6 @@ interface ReadyScreenProps {
   scenarioTitle: string;
   role: string;
   briefing: string;
-  secretObjective?: string;
   onReady: () => void;
   isWaiting: boolean; // true after user clicked Ready, waiting for opponent
 }
@@ -21,7 +20,6 @@ export function ReadyScreen({
   scenarioTitle,
   role,
   briefing,
-  secretObjective,
   onReady,
   isWaiting,
 }: ReadyScreenProps) {
@@ -52,19 +50,6 @@ export function ReadyScreen({
             <p className="text-sm leading-relaxed text-foreground/90 whitespace-pre-wrap">{briefing}</p>
           </div>
 
-          {secretObjective && (
-            <>
-              <div className="border-t border-border" />
-              <div>
-                <p className="text-[10px] uppercase tracking-wider font-semibold text-amber-500 mb-1.5">
-                  🔐 Objective Rahasia (HANYA Kamu yang tahu)
-                </p>
-                <p className="text-sm leading-relaxed text-amber-500/90 whitespace-pre-wrap">
-                  {secretObjective}
-                </p>
-              </div>
-            </>
-          )}
         </div>
 
         {/* Ready / Waiting state */}

@@ -18,7 +18,6 @@ export interface ArenaState {
   status: string;
   role: string;
   briefing: string;
-  secretObjective?: string;
   scenarioTitle: string;
   mode: string;
   durationSeconds: number;
@@ -60,7 +59,6 @@ export const useArenaSocket = (sessionId: string) => {
         isJoined: true,
         role: data.role,
         briefing: data.briefing,
-        secretObjective: data.secretObjective,
         scenarioTitle: data.scenarioTitle,
         mode: data.mode,
         durationSeconds: data.durationSeconds,
@@ -90,6 +88,32 @@ export const useArenaSocket = (sessionId: string) => {
       setArenaState(prev => ({
         ...prev,
         messages: [briefingMsg, ...prev.messages],
+      }));
+    });
+
+    socket.on("arena:artifact", (data: { sessionId: string; text: string }) => {
+      const artifactMsg: ArenaMessage = {
+        userId: "system",
+        role: "system",
+        text: data.text,
+        ts: new Date().toISOString(),
+      };
+      setArenaState(prev => ({
+        ...prev,
+        messages: [...prev.messages, artifactMsg],
+      }));
+    });
+
+    socket.on("arena:hint", (data: { sessionId: string; text: string }) => {
+      const hintMsg: ArenaMessage = {
+        userId: "system",
+        role: "system",
+        text: data.text,
+        ts: new Date().toISOString(),
+      };
+      setArenaState(prev => ({
+        ...prev,
+        messages: [...prev.messages, hintMsg],
       }));
     });
 
@@ -123,6 +147,8 @@ export const useArenaSocket = (sessionId: string) => {
       socket.off("arena:joined");
       socket.off("arena:started");
       socket.off("arena:briefing");
+      socket.off("arena:artifact");
+      socket.off("arena:hint");
       socket.off("arena:message");
       socket.off("arena:opponent-left");
       socket.off("arena:opponent-finished");
