@@ -34,6 +34,7 @@ interface CurriculumItem {
   type: string;
   url: string;
   category: string | null;
+  level_number: number | null;
   author: string | null;
   icon?: string;
 }
@@ -340,9 +341,7 @@ export default function DashboardPage() {
           {curriculum.slice(0, 9).map((item) => (
             <a
               key={item.id}
-              href={item.url}
-              target="_blank"
-              rel="noopener noreferrer"
+              href={item.category && item.level_number ? `/kurikulum/${item.category}/${item.level_number}` : item.url}
               className="group relative overflow-hidden flex items-start gap-3 p-4 rounded-xl border border-border/50 bg-gradient-to-b from-background to-muted/10 hover:from-muted/30 hover:to-muted/5 hover:border-primary/30 transition-all duration-300"
             >
               <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-primary/5 to-transparent rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />

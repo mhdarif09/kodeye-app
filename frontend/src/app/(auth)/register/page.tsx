@@ -52,7 +52,7 @@ export default function RegisterPage() {
       toast.success("Akun berhasil dibuat!");
       handleSuccess(user, accessToken, refreshToken);
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Gagal membuat akun. Silakan coba lagi.");
+      toast.error(error.response?.data?.error?.message || error.response?.data?.message || "Gagal membuat akun. Silakan coba lagi.");
     } finally {
       setIsLoading(false);
     }

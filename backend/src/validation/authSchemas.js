@@ -2,7 +2,7 @@ const Joi = require('joi');
 
 const registerSchema = Joi.object({
   email: Joi.string().email().required(),
-  password: Joi.string().min(8).required(),
+  password: Joi.string().min(6).required(),
   displayName: Joi.string().max(100).required(),
 });
 
@@ -21,7 +21,7 @@ const forgotPasswordSchema = Joi.object({
 
 const resetPasswordSchema = Joi.object({
   token: Joi.string().required(),
-  newPassword: Joi.string().min(8).required(),
+  newPassword: Joi.string().min(6).required(),
 });
 
 const refreshSchema = Joi.object({
