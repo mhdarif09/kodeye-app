@@ -42,12 +42,12 @@ const CATEGORY_LABELS: Record<string, string> = {
 };
 
 const CATEGORY_TO_SKILL: Record<string, string> = {
-  "system-design": "SYSTEM_DESIGN",
-  debugging: "DEBUGGING",
-  "interview-prep": "INTERVIEW_PREP",
-  "technical-communication": "TECHNICAL_COMMUNICATION",
-  negotiation: "NEGOTIATION",
-  "stakeholder-management": "STAKEHOLDER_MANAGEMENT",
+  "system-design": "architecture",
+  debugging: "debugging",
+  "interview-prep": "interview-prep",
+  "technical-communication": "technical-communication",
+  negotiation: "negotiation",
+  "stakeholder-management": "stakeholder-management",
 };
 
 export default function LevelReaderPage() {

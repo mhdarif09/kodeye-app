@@ -6,64 +6,6 @@ const aiService = require('../services/aiService');
 const eloService = require('../services/eloService');
 const aiBotService = require('../services/aiBotService');
 
-// ─── briefing formatter for PvP sessions ──────────────────────────────────────
-
-/**
- * Build a private briefing shown ONLY to each participant when a PvP session starts.
- * Each user gets ONLY their own role's briefing — never the opponent's.
- * Secret objectives are NEVER included (used only during AI scoring).
- * Artifact block (problem/template) is NOT included here; it's broadcast to the shared room separately.
- */
-const formatBriefingMessage = (session, role) => {
-  const isRoleA = role === 'role_a';
-  const roleName = isRoleA ? (session.role_a_name || 'Peran A') : (session.role_b_name || 'Peran B');
-  const briefing = isRoleA ? session.role_a_briefing : session.role_b_briefing;
-  const difficultyLabels = { beginner: 'Pemula', intermediate: 'Menengah', advanced: 'Lanjutan' };
-  const difficulty = difficultyLabels[session.difficulty] || session.difficulty || '-';
-
-  let text = `📋 **${session.scenario_title}**\n`;
-  text += `Kategori: \`${session.category || '-'}\` · Mode: \`${session.mode === 'duel' ? '⚔️ Duel' : '🤝 Co-op'}\` · Level: \`${difficulty}\``;
-  text += `\n\n---\n\n`;
-  text += `**Peran kamu: ${roleName}**\n\n${briefing}`;
-
-  return text;
-};
-
-/**
- * Build the artifact block broadcast to the shared session room when workspace_type is present.
- */
-const formatArtifactBlock = (session) => {
-  const content = session.initial_content;
-  if (!content) return null;
-
-  const problem = content.problem || '';
-  const lang = content.language || session.workspace_type || '';
-  const template = content.template || '';
-  const langTag = lang ? lang : '';
-
-  let text = `**🗂️ Problem:**\n${problem}\n\n`;
-  text +='```' + langTag + '\n' + template + '\n```';
-
-  return text;
-};
-
-/**
- * Build the "who goes first" hint broadcast to the shared session room after briefings.
- */
-const formatStartHint = (session) => {
-  const aName = session.role_a_name || 'Peran A';
-  const bName = session.role_b_name || 'Peran B';
-
-  if (session.workspace_type) {
-    return `${aName}, silakan mulai analisis/kerjakan problem di atas dan share progress kamu di chat.`;
-  }
-  if (session.mode === 'coop') {
-    return `${aName} dan ${bName}, silakan mulai diskusi untuk menyelesaikan situasi ini bersama.`;
-  }
-  // duel
-  return `${aName}, silakan mulai percakapan sesuai skenario kamu.`;
-};
-
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
 /** Fetch session + scenario in one join. Returns null if not found. */
@@ -343,6 +285,15 @@ const registerArenaHandler = (io, socket) => {
         hasProblem: !!session.has_problem,
       });
 
+      // ── replay existing system messages (filtered by targetRole) ──
+      const transcript = parseJsonSafe(session.chat_transcript) ?? [];
+      const systemMessages = transcript.filter(
+        (m) => m.role === 'system' && (!m.targetRole || m.targetRole === role)
+      );
+      for (const msg of systemMessages) {
+        socket.emit('arena:message', msg);
+      }
+
       logger.info(`arena:join | user=${userId} role=${role} session=${sessionId}`);
     } catch (err) {
       logger.error('arena:join error', err);
@@ -391,46 +342,6 @@ const registerArenaHandler = (io, socket) => {
           durationSeconds: session.duration_seconds,
           isBotOpponent: isBotSession,
         });
-
-        // ── shared system messages (PvP only; bot sessions rely on existing flow) ──
-        if (!isBotSession) {
-          // 1. Private briefing per role (sent to each user's personal room)
-          const briefingA = formatBriefingMessage(session, 'role_a');
-          const briefingB = formatBriefingMessage(session, 'role_b');
-
-          if (session.user_a_id) {
-            io.to(`user:${session.user_a_id}`).emit('arena:briefing', {
-              sessionId,
-              role: 'role_a',
-              text: briefingA,
-            });
-          }
-          if (session.user_b_id) {
-            io.to(`user:${session.user_b_id}`).emit('arena:briefing', {
-              sessionId,
-              role: 'role_b',
-              text: briefingB,
-            });
-          }
-
-          // 2. Artifact block (broadcast to shared room once, if workspace exists)
-          if (session.workspace_type && session.workspace_type !== 'chat') {
-            const artifactText = formatArtifactBlock(session);
-            if (artifactText) {
-              io.to(`session:${sessionId}`).emit('arena:artifact', {
-                sessionId,
-                text: artifactText,
-              });
-            }
-          }
-
-          // 3. Start hint (broadcast to shared room once)
-          const hintText = formatStartHint(session);
-          io.to(`session:${sessionId}`).emit('arena:hint', {
-            sessionId,
-            text: hintText,
-          });
-        }
 
         logger.info(`arena:started | session=${sessionId} durationSeconds=${session.duration_seconds}`);
 

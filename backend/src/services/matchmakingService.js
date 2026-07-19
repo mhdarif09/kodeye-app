@@ -4,31 +4,16 @@ const { v4: uuidv4 } = require('uuid');
 const redisClient = require('../db/redis');
 const pool = require('../db/mysql');
 const logger = require('../utils/logger');
-// userSocketMap is used so this service can emit directly to a specific user's socket.
-// Imported here to resolve the TODO left in the original match:found emit block.
-const userSocketMap = require('../socket/userSocketMap');
 
 const QUEUE_TTL_SECONDS = 300; // 5 min hard max before Redis auto-cleans
 const MATCH_TIMEOUT_MS = 2 * 60 * 1000; // 2 minutes
 
+const difficultyLabels = { beginner: 'Pemula', intermediate: 'Menengah', advanced: 'Lanjutan' };
+
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
-const buildQueueKey = (mode, skillCategory, experienceLevel) =>
-  `queue:${mode}:${skillCategory}:${experienceLevel}`;
-
-/**
- * Map SKILL_CATEGORIES enum (uppercase) to scenario category slugs (lowercase-hyphen)
- * used in the scenarios table so ORDER BY RAND() filter stays accurate.
- */
-const categoryMap = {
-  SYSTEM_DESIGN: 'architecture',
-  TECHNICAL_COMMUNICATION: 'technical-communication',
-  DEBUGGING: 'debugging',
-  NEGOTIATION: 'negotiation',
-  STAKEHOLDER_MANAGEMENT: 'stakeholder-management',
-  MENTORING: 'technical-communication', // closest fit in seed data
-  INTERVIEW_PREP: 'interview-prep',
-};
+const buildQueueKey = (mode, category, difficulty) =>
+  `queue:${mode}:${category}:${difficulty}`;
 
 // ─── queue operations ─────────────────────────────────────────────────────────
 
@@ -36,8 +21,8 @@ const categoryMap = {
  * Push a user into the appropriate Redis list queue.
  * Each element is JSON so we can track joinedAt for timeout checks.
  */
-const joinQueue = async (userId, mode, skillCategory, experienceLevel) => {
-  const key = buildQueueKey(mode, skillCategory, experienceLevel);
+const joinQueue = async (userId, mode, category, difficulty) => {
+  const key = buildQueueKey(mode, category, difficulty);
   const entry = JSON.stringify({ userId, joinedAt: Date.now() });
 
   // RPUSH so LPOP later gives FIFO order
@@ -53,8 +38,8 @@ const joinQueue = async (userId, mode, skillCategory, experienceLevel) => {
  * Remove a specific user from a queue list.
  * Redis LREM removes all occurrences that match.
  */
-const leaveQueue = async (userId, mode, skillCategory, experienceLevel) => {
-  const key = buildQueueKey(mode, skillCategory, experienceLevel);
+const leaveQueue = async (userId, mode, category, difficulty) => {
+  const key = buildQueueKey(mode, category, difficulty);
 
   // Scan all entries and filter out the one belonging to this userId
   const raw = await redisClient.lrange(key, 0, -1);
@@ -84,13 +69,13 @@ const getQueueStatus = async (userId) => {
         const parsed = JSON.parse(raw[i]);
         if (parsed.userId === userId) {
           const elapsedMs = Date.now() - parsed.joinedAt;
-          const [, mode, skillCategory, experienceLevel] = key.split(':');
+          const [, mode, category, difficulty] = key.split(':');
           return {
             inQueue: true,
             key,
             mode,
-            skillCategory,
-            experienceLevel,
+            category,
+            difficulty,
             position: i + 1,
             elapsedSeconds: Math.floor(elapsedMs / 1000),
           };
@@ -102,19 +87,118 @@ const getQueueStatus = async (userId) => {
   return { inQueue: false };
 };
 
-// ─── session creation helper ──────────────────────────────────────────────────
+// ─── session creation + briefing injection ───────────────────────────────────
 
-const createSession = async (entryA, entryB, mode, skillCategory) => {
+/**
+ * Append a single message to the session's chat_transcript JSON array.
+ */
+const appendMessage = async (sessionId, msg) => {
+  try {
+    await pool.query(
+      `UPDATE sessions
+       SET chat_transcript = JSON_ARRAY_APPEND(
+         COALESCE(chat_transcript, JSON_ARRAY()),
+         '$',
+         CAST(? AS JSON)
+       )
+       WHERE id = ?`,
+      [JSON.stringify(msg), sessionId]
+    );
+  } catch (err) {
+    logger.error(`appendMessage failed | session=${sessionId}`, { error: err.message });
+  }
+};
+
+/**
+ * Build a bilingual (ID + EN) private briefing for one participant.
+ * Secret objectives are NEVER included.
+ */
+const formatBriefing = (scenario, role) => {
+  const isRoleA = role === 'role_a';
+  const roleNameId = isRoleA ? (scenario.role_a_name || 'Peran A') : (scenario.role_b_name || 'Peran B');
+  const roleNameEn = isRoleA ? (scenario.role_a_name || 'Role A') : (scenario.role_b_name || 'Role B');
+  const briefing = isRoleA ? scenario.role_a_briefing : scenario.role_b_briefing;
+  const diff = difficultyLabels[scenario.difficulty] || scenario.difficulty || '-';
+  const diffEn = scenario.difficulty || '-';
+  const modeId = scenario.mode === 'duel' ? '⚔️ Duel' : '🤝 Co-op';
+  const modeEn = scenario.mode === 'duel' ? 'Duel' : 'Co-op';
+
+  return `📋 **${scenario.title}**
+Kategori: \`${scenario.category || '-'}\` · Mode: \`${modeId}\` · Level: \`${diff}\`
+
+---
+
+**🇮🇩 Peran kamu: ${roleNameId}**
+
+${briefing}
+
+---
+
+**🇬🇧 Your Role: ${roleNameEn}**
+Category: \`${scenario.category || '-'}\` · Mode: \`${modeEn}\` · Level: \`${diffEn}\`
+
+${briefing}`;
+};
+
+/**
+ * Build a bilingual artifact block (problem + template).
+ */
+const formatArtifact = (scenario) => {
+  const ic = scenario.initial_content;
+  if (!ic) return null;
+  const lang = ic.language || scenario.workspace_type || '';
+  const problemEn = ic.problem || '';
+  return `**🗂️ Problem / Problem:**
+${problemEn}
+
+\`\`\`${lang}
+${ic.template || ''}
+\`\`\``;
+};
+
+/**
+ * Build a bilingual start hint.
+ */
+const formatStartHint = (scenario) => {
+  const aNameId = scenario.role_a_name || 'Peran A';
+  const aNameEn = scenario.role_a_name || 'Role A';
+  const bNameId = scenario.role_b_name || 'Peran B';
+  const bNameEn = scenario.role_b_name || 'Role B';
+
+  if (scenario.workspace_type && scenario.workspace_type !== 'chat') {
+    return `🇮🇩 ${aNameId}, silakan mulai analisis/kerjakan problem di atas dan share progress kamu di chat.
+
+🇬🇧 ${aNameEn}, please start analyzing/working on the problem above and share your progress in the chat.`;
+  }
+  if (scenario.mode === 'coop') {
+    return `🇮🇩 ${aNameId} dan ${bNameId}, silakan mulai diskusi untuk menyelesaikan situasi ini bersama.
+
+🇬🇧 ${aNameEn} and ${bNameEn}, please start discussing to solve this situation together.`;
+  }
+  return `🇮🇩 ${aNameId}, silakan mulai percakapan sesuai skenario kamu.
+
+🇬🇧 ${aNameEn}, please start the conversation according to your scenario.`;
+};
+
+const createSession = async (entryA, entryB, mode, category) => {
   const sessionId = uuidv4();
 
-  // Pick a random scenario that matches mode + mapped category
-  const scenarioCategory = categoryMap[skillCategory] || skillCategory.toLowerCase();
+  // Pick a random scenario that matches mode + category
   const [scenarioRows] = await pool.query(
-    'SELECT id FROM scenarios WHERE mode = ? AND category = ? AND is_active = 1 ORDER BY RAND() LIMIT 1',
-    [mode, scenarioCategory]
+    `SELECT * FROM scenarios WHERE mode = ? AND category = ? AND is_active = 1 ORDER BY RAND() LIMIT 1`,
+    [mode, category]
   );
 
-  const scenarioId = scenarioRows[0]?.id || null;
+  const scenario = scenarioRows[0];
+  if (!scenario) {
+    logger.error(`No active scenario for mode=${mode} category=${category}`);
+    return null;
+  }
+
+  // Parse JSON fields
+  const initialContent = scenario.initial_content
+    ? (typeof scenario.initial_content === 'string' ? JSON.parse(scenario.initial_content) : scenario.initial_content)
+    : null;
 
   // Randomly assign roles
   const [userA, userB] = Math.random() < 0.5
@@ -123,19 +207,45 @@ const createSession = async (entryA, entryB, mode, skillCategory) => {
 
   await pool.query(
     `INSERT INTO sessions
-       (id, scenario_id, mode, user_a_id, user_b_id, user_a_role, user_b_role, status, started_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, 'in_progress', NOW())`,
-    [sessionId, scenarioId, mode, userA.userId, userB.userId, 'role_a', 'role_b']
+       (id, scenario_id, mode, user_a_id, user_b_id, user_a_role, user_b_role, status)
+     VALUES (?, ?, ?, ?, ?, ?, ?, 'waiting')`,
+    [sessionId, scenario.id, mode, userA.userId, userB.userId, 'role_a', 'role_b']
   );
 
   logger.info(
-    `Match created | session=${sessionId} mode=${mode} category=${skillCategory} ` +
-    `user_a=${userA.userId} user_b=${userB.userId} scenario=${scenarioId}`
+    `Match created | session=${sessionId} mode=${mode} category=${category} ` +
+    `user_a=${userA.userId} user_b=${userB.userId} scenario=${scenario.id}`
   );
+
+  // ── Build & inject briefing messages into chat_transcript ───────────────
+  // These are replayed when users join via arena:join, so no socket emits here.
+
+  const now = new Date().toISOString();
+  const scenarioWithIc = { ...scenario, initial_content: initialContent };
+
+  // Private briefing for role_a (targetRole prevents leaking to opponent)
+  const textA = formatBriefing(scenarioWithIc, 'role_a');
+  await appendMessage(sessionId, { userId: 'system', role: 'system', targetRole: 'role_a', text: textA, ts: now });
+
+  // Private briefing for role_b
+  const textB = formatBriefing(scenarioWithIc, 'role_b');
+  await appendMessage(sessionId, { userId: 'system', role: 'system', targetRole: 'role_b', text: textB, ts: now });
+
+  // Artifact block (no targetRole — visible to both)
+  if (scenario.workspace_type && scenario.workspace_type !== 'chat' && initialContent) {
+    const artifactText = formatArtifact(scenarioWithIc);
+    if (artifactText) {
+      await appendMessage(sessionId, { userId: 'system', role: 'system', text: artifactText, ts: now });
+    }
+  }
+
+  // Start hint (no targetRole — visible to both)
+  const hintText = formatStartHint(scenarioWithIc);
+  await appendMessage(sessionId, { userId: 'system', role: 'system', text: hintText, ts: now });
 
   return {
     sessionId,
-    scenarioId,
+    scenarioId: scenario.id,
     mode,
     userA: { userId: userA.userId, role: 'role_a' },
     userB: { userId: userB.userId, role: 'role_b' },
@@ -157,7 +267,7 @@ const findMatch = async () => {
     if (!keys.length) return;
 
     for (const key of keys) {
-      const [, mode, skillCategory, experienceLevel] = key.split(':');
+      const [, mode, category, difficulty] = key.split(':');
 
       // Check for timeouts first — scan without popping
       const allRaw = await redisClient.lrange(key, 0, -1);
@@ -170,12 +280,11 @@ const findMatch = async () => {
             await redisClient.lrem(key, 1, item);
             logger.warn(`Queue timeout for user ${entry.userId} on ${key}`);
 
-            // TODO: connect to userSocketMap in socket stage to emit directly to user socket
             if (_io) {
               _io.to(`user:${entry.userId}`).emit('match:timeout', {
                 userId: entry.userId,
                 message: 'No match found. You can continue against an AI opponent.',
-                aiOpponentAvailable: true, // AI mode not yet implemented — placeholder
+                aiOpponentAvailable: true,
               });
             }
           }
@@ -200,11 +309,9 @@ const findMatch = async () => {
         continue;
       }
 
-      const matchData = await createSession(entryA, entryB, mode, skillCategory);
+      const matchData = await createSession(entryA, entryB, mode, category);
+      if (!matchData) continue; // scenario not found
 
-      // TODO: in socket stage, wire to userSocketMap so we can do:
-      //   io.to(socketIdA).emit('match:found', matchData)
-      //   io.to(socketIdB).emit('match:found', matchData)
       if (_io) {
         _io.to(`user:${matchData.userA.userId}`).emit('match:found', matchData);
         _io.to(`user:${matchData.userB.userId}`).emit('match:found', matchData);

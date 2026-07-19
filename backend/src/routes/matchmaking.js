@@ -16,14 +16,8 @@ router.use(verifyJWT);
 // POST /api/matchmaking/queue
 router.post('/queue', validate(joinQueueSchema), async (req, res, next) => {
   try {
-    const { mode, skillCategory } = req.body;
+    const { mode, category, difficulty } = req.body;
     const userId = req.user.id;
-
-    // Fetch experienceLevel from user profile — not trusted from client
-    const user = await userQueries.findById(userId);
-    if (!user) return next(new AppError('User not found', 404, 'NOT_FOUND'));
-
-    const experienceLevel = user.experience_level || 'junior';
 
     // Prevent duplicate queue entries
     const existing = await matchmakingService.getQueueStatus(userId);
@@ -31,13 +25,12 @@ router.post('/queue', validate(joinQueueSchema), async (req, res, next) => {
       return next(new AppError('You are already in a queue', 409, 'ALREADY_IN_QUEUE'));
     }
 
-    const result = await matchmakingService.joinQueue(userId, mode, skillCategory, experienceLevel);
+    const result = await matchmakingService.joinQueue(userId, mode, category, difficulty);
     res.status(200).json({
       data: {
         message: 'Joined matchmaking queue',
         queueKey: result.key,
         position: result.position,
-        experienceLevel,
       },
     });
   } catch (err) {
@@ -58,8 +51,8 @@ router.delete('/queue', async (req, res, next) => {
     await matchmakingService.leaveQueue(
       userId,
       status.mode,
-      status.skillCategory,
-      status.experienceLevel
+      status.category,
+      status.difficulty
     );
 
     res.status(200).json({ data: { message: 'Left matchmaking queue' } });

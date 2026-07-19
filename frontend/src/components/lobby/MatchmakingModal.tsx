@@ -10,14 +10,20 @@ import { useSocket } from "@/hooks/useSocket";
 import api from "@/lib/api";
 import { cn } from "@/lib/utils";
 
-const SKILL_CATEGORIES = [
-  { label: "System Design", value: "SYSTEM_DESIGN" },
-  { label: "Technical Communication", value: "TECHNICAL_COMMUNICATION" },
-  { label: "Debugging", value: "DEBUGGING" },
-  { label: "Negotiation", value: "NEGOTIATION" },
-  { label: "Stakeholder Management", value: "STAKEHOLDER_MANAGEMENT" },
-  { label: "Mentoring", value: "MENTORING" },
-  { label: "Interview Prep", value: "INTERVIEW_PREP" },
+const CATEGORIES = [
+  { label: "Debugging", value: "debugging" },
+  { label: "System Design", value: "architecture" },
+  { label: "Technical Communication", value: "technical-communication" },
+  { label: "Negotiation", value: "negotiation" },
+  { label: "Stakeholder Management", value: "stakeholder-management" },
+  { label: "Career Growth", value: "career-growth" },
+  { label: "Interview Prep", value: "interview-prep" },
+];
+
+const DIFFICULTIES = [
+  { label: "Pemula", value: "beginner" },
+  { label: "Menengah", value: "intermediate" },
+  { label: "Lanjutan", value: "advanced" },
 ];
 
 interface MatchmakingModalProps {
@@ -29,10 +35,11 @@ interface MatchmakingModalProps {
 
 export function MatchmakingModal({ isOpen, onClose, initialMode = "duel", initialCategory }: MatchmakingModalProps) {
   const router = useRouter();
-  const { socket } = useSocket(); // connects automatically since we wrapped in provider or use directly
+  const { socket } = useSocket();
   
   const [mode, setMode] = useState<"duel" | "coop">(initialMode);
-  const [category, setCategory] = useState<string>(initialCategory || "SYSTEM_DESIGN");
+  const [category, setCategory] = useState<string>(initialCategory || "debugging");
+  const [difficulty, setDifficulty] = useState<string>("intermediate");
   const [status, setStatus] = useState<"idle" | "searching" | "timeout">("idle");
   const [elapsed, setElapsed] = useState(0);
 
@@ -83,19 +90,13 @@ export function MatchmakingModal({ isOpen, onClose, initialMode = "duel", initia
 
   const handleStartSearch = async () => {
     try {
-      await api.post("/api/matchmaking/queue", {
-        mode,
-        skillCategory: category,
-      });
+      await api.post("/api/matchmaking/queue", { mode, category, difficulty });
       setStatus("searching");
     } catch (error: any) {
       if (error.response?.status === 409) {
         await api.delete("/api/matchmaking/queue").catch(() => {});
         try {
-          await api.post("/api/matchmaking/queue", {
-            mode,
-            skillCategory: category,
-          });
+          await api.post("/api/matchmaking/queue", { mode, category, difficulty });
           setStatus("searching");
           return;
         } catch {}
@@ -155,15 +156,30 @@ export function MatchmakingModal({ isOpen, onClose, initialMode = "duel", initia
             </div>
 
             <div className="space-y-3">
-              <label className="text-sm font-medium">Kategori Skill</label>
+              <label className="text-sm font-medium">Kategori</label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 className="w-full h-10 rounded-md border border-input bg-transparent px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               >
-                {SKILL_CATEGORIES.map((c) => (
+                {CATEGORIES.map((c) => (
                   <option key={c.value} value={c.value} className="bg-background">
                     {c.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-3">
+              <label className="text-sm font-medium">Level Kesulitan</label>
+              <select
+                value={difficulty}
+                onChange={(e) => setDifficulty(e.target.value)}
+                className="w-full h-10 rounded-md border border-input bg-transparent px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              >
+                {DIFFICULTIES.map((d) => (
+                  <option key={d.value} value={d.value} className="bg-background">
+                    {d.label}
                   </option>
                 ))}
               </select>
@@ -188,7 +204,7 @@ export function MatchmakingModal({ isOpen, onClose, initialMode = "duel", initia
             <div className="text-center">
               <h3 className="text-lg font-semibold animate-pulse">Mencari {mode === "duel" ? "lawan" : "partner"}...</h3>
               <p className="text-sm text-muted-foreground mt-1">
-                Kategori: {SKILL_CATEGORIES.find(c => c.value === category)?.label}
+                {CATEGORIES.find(c => c.value === category)?.label} · {DIFFICULTIES.find(d => d.value === difficulty)?.label}
               </p>
             </div>
 

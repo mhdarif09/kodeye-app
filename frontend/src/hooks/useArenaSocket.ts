@@ -78,45 +78,6 @@ export const useArenaSocket = (sessionId: string) => {
       }));
     });
 
-    socket.on("arena:briefing", (data: { sessionId: string; role: string; text: string }) => {
-      const briefingMsg: ArenaMessage = {
-        userId: "system",
-        role: "system",
-        text: data.text,
-        ts: new Date().toISOString(),
-      };
-      setArenaState(prev => ({
-        ...prev,
-        messages: [briefingMsg, ...prev.messages],
-      }));
-    });
-
-    socket.on("arena:artifact", (data: { sessionId: string; text: string }) => {
-      const artifactMsg: ArenaMessage = {
-        userId: "system",
-        role: "system",
-        text: data.text,
-        ts: new Date().toISOString(),
-      };
-      setArenaState(prev => ({
-        ...prev,
-        messages: [...prev.messages, artifactMsg],
-      }));
-    });
-
-    socket.on("arena:hint", (data: { sessionId: string; text: string }) => {
-      const hintMsg: ArenaMessage = {
-        userId: "system",
-        role: "system",
-        text: data.text,
-        ts: new Date().toISOString(),
-      };
-      setArenaState(prev => ({
-        ...prev,
-        messages: [...prev.messages, hintMsg],
-      }));
-    });
-
     socket.on("arena:message", (msg: ArenaMessage) => {
       setArenaState(prev => ({
         ...prev,
@@ -146,9 +107,6 @@ export const useArenaSocket = (sessionId: string) => {
     return () => {
       socket.off("arena:joined");
       socket.off("arena:started");
-      socket.off("arena:briefing");
-      socket.off("arena:artifact");
-      socket.off("arena:hint");
       socket.off("arena:message");
       socket.off("arena:opponent-left");
       socket.off("arena:opponent-finished");
