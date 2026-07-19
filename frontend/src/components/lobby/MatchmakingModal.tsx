@@ -48,15 +48,16 @@ interface MatchBriefingData {
 interface MatchmakingModalProps {
   isOpen: boolean;
   onClose: () => void;
-  initialMode?: "duel" | "coop";
+  initialMode?: "duel" | "coop" | "ai";
   initialCategory?: string;
+  aiScenarioId?: string;
 }
 
-export function MatchmakingModal({ isOpen, onClose, initialMode = "duel", initialCategory }: MatchmakingModalProps) {
+export function MatchmakingModal({ isOpen, onClose, initialMode = "duel", initialCategory, aiScenarioId }: MatchmakingModalProps) {
   const router = useRouter();
   const { socket } = useSocket();
   
-  const [mode, setMode] = useState<"duel" | "coop">(initialMode);
+  const [mode, setMode] = useState<"duel" | "coop" | "ai">(initialMode);
   const [category, setCategory] = useState<string>(initialCategory || "debugging");
   const [difficulty, setDifficulty] = useState<string>("intermediate");
   const [status, setStatus] = useState<"idle" | "searching" | "timeout" | "briefing" | "waiting_partner">("idle");
@@ -74,6 +75,13 @@ export function MatchmakingModal({ isOpen, onClose, initialMode = "duel", initia
       setBriefing(null);
     }
   }, [isOpen, initialMode, initialCategory]);
+
+  // Auto-start AI practice when aiScenarioId is set
+  useEffect(() => {
+    if (isOpen && aiScenarioId && initialMode === "ai") {
+      handleStartAiPractice(aiScenarioId);
+    }
+  }, [isOpen, aiScenarioId]);
 
   // Timer effect
   useEffect(() => {
@@ -93,7 +101,7 @@ export function MatchmakingModal({ isOpen, onClose, initialMode = "duel", initia
     if (!socket) return;
 
     const onBriefing = (data: MatchBriefingData) => {
-      toast.success("Match ditemukan!");
+      toast.success(data.mode === "ai" ? "Latihan dimulai!" : "Match ditemukan!");
       setBriefing(data);
       setStatus("briefing");
     };
@@ -118,6 +126,9 @@ export function MatchmakingModal({ isOpen, onClose, initialMode = "duel", initia
   }, [socket, router]);
 
   const handleStartSearch = async () => {
+    if (mode === "ai") {
+      return handleStartAiPractice();
+    }
     try {
       await api.post("/api/matchmaking/queue", { mode, category, difficulty });
       setStatus("searching");
@@ -131,6 +142,34 @@ export function MatchmakingModal({ isOpen, onClose, initialMode = "duel", initia
         } catch {}
       }
       toast.error(error.response?.data?.message || "Gagal masuk antrean");
+    }
+  };
+
+  const handleStartAiPractice = async (scenarioId?: string) => {
+    try {
+      const res = await api.post("/api/sessions/ai-practice", scenarioId ? { scenarioId } : {});
+      const d = res.data.data;
+      setBriefing({
+        sessionId: d.sessionId,
+        role: d.role,
+        roleName: d.roleName,
+        roleNameEn: d.roleNameEn,
+        briefing: d.briefing,
+        briefingEn: d.briefingEn,
+        scenarioTitle: d.scenarioTitle,
+        scenarioTitleEn: d.scenarioTitleEn,
+        category: d.category || category,
+        difficulty: d.difficulty || difficulty,
+        mode: d.mode,
+        durationSeconds: d.durationSeconds,
+        problem: d.problem || null,
+        problemEn: d.problemEn || null,
+        template: d.template || null,
+        templateLanguage: d.templateLanguage || null,
+      });
+      setStatus("briefing");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Gagal memulai AI practice");
     }
   };
 
@@ -183,6 +222,9 @@ export function MatchmakingModal({ isOpen, onClose, initialMode = "duel", initia
                 <Button variant={mode === "coop" ? "primary" : "secondary"} className="flex-1" onClick={() => setMode("coop")}>
                   🤝 Co-op
                 </Button>
+                <Button variant={mode === "ai" ? "primary" : "secondary"} className="flex-1" onClick={() => setMode("ai")}>
+                  🤖 AI
+                </Button>
               </div>
             </div>
             <div className="space-y-3">
@@ -228,40 +270,40 @@ export function MatchmakingModal({ isOpen, onClose, initialMode = "duel", initia
       )}
 
       {status === "briefing" && briefing && (
-        <div className="flex flex-col space-y-6">
-          <div className="flex items-center justify-between">
-            <div className="text-center flex-1">
-              <h2 className="text-2xl font-bold tracking-tight">MATCH DITEMUKAN</h2>
-              <p className="text-sm text-muted-foreground mt-1">Baca briefing sebelum memulai sesi</p>
+        <div className="flex flex-col max-h-[80vh]">
+          <div className="flex items-center justify-between shrink-0 pb-4 border-b border-border">
+            <div className="flex-1">
+              <h2 className="text-lg font-bold tracking-tight leading-tight">MATCH DITEMUKAN</h2>
+              <p className="text-xs text-muted-foreground">Baca briefing sebelum memulai sesi</p>
             </div>
             <button
               onClick={() => setLocale((l) => (l === "id" ? "en" : "id"))}
-              className="text-xs px-2 py-1 rounded border border-border hover:bg-secondary/50 transition shrink-0"
+              className="text-xs px-2 py-1 rounded border border-border hover:bg-secondary/50 transition shrink-0 ml-2"
             >
               {locale === "id" ? "EN" : "ID"}
             </button>
           </div>
 
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div className="bg-secondary/30 rounded-md p-3">
+          <div className="overflow-y-auto space-y-3 py-4 flex-1 min-h-0">
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="bg-secondary/30 rounded-md p-2">
                 <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Kategori</span>
                 <p className="font-medium capitalize">{briefing.category}</p>
               </div>
-              <div className="bg-secondary/30 rounded-md p-3">
+              <div className="bg-secondary/30 rounded-md p-2">
                 <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Level</span>
                 <p className="font-medium capitalize">{DIFFICULTIES.find(d => d.value === briefing.difficulty)?.label || briefing.difficulty}</p>
               </div>
             </div>
 
-            <div className="bg-secondary/30 rounded-md p-3">
+            <div className="bg-secondary/30 rounded-md p-2">
               <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Skenario</span>
-              <p className="font-medium">{locale === "id" ? briefing.scenarioTitle : briefing.scenarioTitleEn}</p>
+              <p className="text-sm font-medium">{locale === "id" ? briefing.scenarioTitle : briefing.scenarioTitleEn}</p>
             </div>
 
-            <div className="bg-primary/10 border border-primary/20 rounded-md p-3">
+            <div className="bg-primary/10 border border-primary/20 rounded-md p-2">
               <span className="text-[10px] uppercase tracking-wider font-semibold text-primary">Peran Kamu</span>
-              <p className="font-semibold text-base">{locale === "id" ? briefing.roleName : briefing.roleNameEn}</p>
+              <p className="font-semibold">{locale === "id" ? briefing.roleName : briefing.roleNameEn}</p>
             </div>
 
             <div>
@@ -286,7 +328,7 @@ export function MatchmakingModal({ isOpen, onClose, initialMode = "duel", initia
             )}
           </div>
 
-          <div className="flex gap-3 justify-end pt-4 border-t border-border">
+          <div className="flex gap-3 justify-end pt-4 border-t border-border shrink-0">
             <Button variant="ghost" onClick={handleCancelSearch}>Batal</Button>
             <Button onClick={handleStartSession}>Mulai Sesi</Button>
           </div>

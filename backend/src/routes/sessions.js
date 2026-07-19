@@ -185,12 +185,32 @@ router.post('/ai-practice', async (req, res, next) => {
 
     logger.info(`AI practice session created | session=${sessionId} user=${userId} scenario=${scenario.id}`);
 
+    const ic = scenario.initial_content
+      ? (typeof scenario.initial_content === 'string' ? JSON.parse(scenario.initial_content) : scenario.initial_content)
+      : null;
+
+    const userRole = roles[0];
+    const isRoleA = userRole === 'role_a';
+
     res.status(201).json({
       data: {
         sessionId,
-        scenarioTitle: scenario.title,
+        scenarioTitle: scenario.title_id || scenario.title,
+        scenarioTitleEn: scenario.title || scenario.title_id,
+        role: userRole,
+        roleName: isRoleA ? (scenario.role_a_name_id || scenario.role_a_name) : (scenario.role_b_name_id || scenario.role_b_name),
+        roleNameEn: isRoleA ? (scenario.role_a_name || scenario.role_a_name_id) : (scenario.role_b_name || scenario.role_b_name_id),
+        briefing: isRoleA ? (scenario.role_a_briefing_id || scenario.role_a_briefing) : (scenario.role_b_briefing_id || scenario.role_b_briefing),
+        briefingEn: isRoleA ? (scenario.role_a_briefing || scenario.role_a_briefing_id) : (scenario.role_b_briefing || scenario.role_b_briefing_id),
+        problem: ic?.problem || null,
+        problemEn: ic?.problem || null,
+        template: ic?.template || null,
+        templateLanguage: ic?.language || scenario.workspace_type || null,
+        category: scenario.category,
+        difficulty: scenario.difficulty,
         mode: 'duel',
-        role: roles[1], // opponent role is assigned to bot; user gets roles[0]
+        durationSeconds: scenario.duration_seconds,
+        isBotOpponent: true,
       },
     });
   } catch (err) {

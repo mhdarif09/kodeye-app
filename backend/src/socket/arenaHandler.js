@@ -331,8 +331,14 @@ const registerArenaHandler = (io, socket) => {
       const session = await getSessionWithScenario(sessionId);
       if (!session) return socket.emit('arena:error', { message: 'Session not found' });
 
+      const isBotSession = session.user_b_id === aiBotService.BOT_USER_ID;
+
       if (!readyMap.has(sessionId)) readyMap.set(sessionId, new Set());
       readyMap.get(sessionId).add(userId);
+
+      if (isBotSession) {
+        readyMap.get(sessionId).add(aiBotService.BOT_USER_ID);
+      }
 
       const readyCount = readyMap.get(sessionId).size;
       logger.info(`player_ready | user=${userId} session=${sessionId} (${readyCount}/2 ready)`);

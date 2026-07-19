@@ -71,12 +71,12 @@ export default function DashboardPage() {
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
   const [curriculum, setCurriculum] = useState<CurriculumItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [aiLoading, setAiLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [donation, setDonation] = useState<{ enabled: boolean; settings: any } | null>(null);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [matchMode, setMatchMode] = useState<"duel" | "coop">("duel");
+  const [matchMode, setMatchMode] = useState<"duel" | "coop" | "ai">("duel");
+  const [aiScenarioId, setAiScenarioId] = useState<string | undefined>();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -106,30 +106,20 @@ export default function DashboardPage() {
 
   const openMatchmaking = (mode: "duel" | "coop") => {
     setMatchMode(mode);
+    setAiScenarioId(undefined);
     setIsModalOpen(true);
   };
 
-  const handleAiPractice = async () => {
-    setAiLoading(true);
-    try {
-      const res = await api.post("/api/sessions/ai-practice");
-      toast.success("AI practice session dimulai!");
-      router.push(`/arena/${res.data.data.sessionId}`);
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || "Gagal memulai AI practice");
-    } finally {
-      setAiLoading(false);
-    }
+  const handleAiPractice = () => {
+    setMatchMode("ai");
+    setAiScenarioId(undefined);
+    setIsModalOpen(true);
   };
 
-  const handleScenarioClick = async (scenario: Scenario) => {
-    try {
-      const res = await api.post("/api/sessions/ai-practice", { scenarioId: scenario.id });
-      toast.success(`Latihan "${scenario.title}" dimulai!`);
-      router.push(`/arena/${res.data.data.sessionId}`);
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || "Gagal memulai latihan");
-    }
+  const handleScenarioClick = (scenario: Scenario) => {
+    setMatchMode("ai");
+    setAiScenarioId(scenario.id);
+    setIsModalOpen(true);
   };
 
   return (
@@ -203,12 +193,11 @@ export default function DashboardPage() {
 
           <button
             onClick={handleAiPractice}
-            disabled={aiLoading}
-            className="group relative overflow-hidden h-28 sm:h-36 rounded-2xl bg-gradient-to-br from-blue-500/20 via-blue-500/10 to-background border border-blue-500/20 hover:border-blue-500/40 transition-all duration-300 text-left p-4 md:p-5 disabled:opacity-50"
+            className="group relative overflow-hidden h-28 sm:h-36 rounded-2xl bg-gradient-to-br from-blue-500/20 via-blue-500/10 to-background border border-blue-500/20 hover:border-blue-500/40 transition-all duration-300 text-left p-4 md:p-5"
           >
             <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl translate-x-1/4 -translate-y-1/4 group-hover:translate-x-1/3 group-hover:-translate-y-1/3 transition-all duration-500" />
             <div className="relative h-full flex flex-col justify-between">
-              <span className="text-2xl md:text-3xl">{aiLoading ? "⏳" : "🧠"}</span>
+              <span className="text-2xl md:text-3xl">🧠</span>
               <div>
                 <p className="text-base md:text-lg font-bold">Latihan AI</p>
                 <p className="text-[10px] md:text-xs text-muted-foreground/70 font-medium uppercase tracking-widest">Sendiri dulu</p>
@@ -405,8 +394,9 @@ export default function DashboardPage() {
 
       <MatchmakingModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => { setIsModalOpen(false); setAiScenarioId(undefined); }}
         initialMode={matchMode}
+        aiScenarioId={aiScenarioId}
       />
     </div>
   );

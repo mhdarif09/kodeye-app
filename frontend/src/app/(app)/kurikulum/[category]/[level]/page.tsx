@@ -58,7 +58,8 @@ export default function LevelReaderPage() {
   const [locked, setLocked] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [matchModal, setMatchModal] = useState(false);
-  const [matchMode, setMatchMode] = useState<"duel" | "coop">("duel");
+  const [matchMode, setMatchMode] = useState<"duel" | "coop" | "ai">("duel");
+  const [aiScenarioId, setAiScenarioId] = useState<string | undefined>();
   const [inviteLoading, setInviteLoading] = useState(false);
   const [showActions, setShowActions] = useState(false);
 
@@ -103,15 +104,9 @@ export default function LevelReaderPage() {
     const mode = item.mode;
 
     if (mode === "solo") {
-      setActionLoading(true);
-      try {
-        const res = await api.post("/api/sessions/ai-practice", { scenarioId: item.id });
-        router.push(`/arena/${res.data.data.sessionId}`);
-      } catch (err: any) {
-        toast.error(err.response?.data?.message || "Gagal memulai latihan");
-      } finally {
-        setActionLoading(false);
-      }
+      setMatchMode("ai");
+      setAiScenarioId(item.id);
+      setMatchModal(true);
     } else if (mode === "duel" || mode === "coop") {
       setMatchMode(mode);
       setShowActions(true);
@@ -333,9 +328,10 @@ export default function LevelReaderPage() {
 
       <MatchmakingModal
         isOpen={matchModal}
-        onClose={() => setMatchModal(false)}
+        onClose={() => { setMatchModal(false); setAiScenarioId(undefined); }}
         initialMode={matchMode}
         initialCategory={CATEGORY_TO_SKILL[category] || undefined}
+        aiScenarioId={aiScenarioId}
       />
     </div>
   );
