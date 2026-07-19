@@ -6,6 +6,7 @@ const logger = require('../utils/logger');
 
 const groq = new Groq({ apiKey: config.groq.apiKey });
 const MODEL = 'llama-3.3-70b-versatile';
+const FALLBACK_MODEL = 'llama-3.1-8b-instant';
 const MAX_TOKENS = 256;
 
 const BOT_USER_ID = '00000000-0000-0000-0000-000000000001';
@@ -31,19 +32,25 @@ Do NOT include any meta commentary or notes. Respond directly to the last messag
 };
 
 const generateResponse = async (briefing, secretObjective, scenarioTitle, transcript) => {
-  try {
-    const prompt = buildBotPrompt(briefing, secretObjective, scenarioTitle, transcript);
-    const completion = await groq.chat.completions.create({
-      model: MODEL,
-      max_tokens: MAX_TOKENS,
-      messages: [{ role: 'user', content: prompt }],
-    });
-    const text = completion.choices[0]?.message?.content ?? '';
-    return text.trim();
-  } catch (err) {
-    logger.error('AI bot response failed', { error: err.message });
-    return null;
+  const prompt = buildBotPrompt(briefing, secretObjective, scenarioTitle, transcript);
+  const modelsToTry = [MODEL, FALLBACK_MODEL];
+
+  for (const model of modelsToTry) {
+    try {
+      const completion = await groq.chat.completions.create({
+        model,
+        max_tokens: MAX_TOKENS,
+        messages: [{ role: 'user', content: prompt }],
+      });
+      const text = completion.choices[0]?.message?.content ?? '';
+      if (text.trim()) return text.trim();
+    } catch (err) {
+      logger.warn(`AI bot model ${model} failed`, { error: err.message });
+    }
   }
+
+  logger.error('AI bot response failed — all models exhausted');
+  return null;
 };
 
 module.exports = { generateResponse, BOT_USER_ID, BOT_USERNAME };

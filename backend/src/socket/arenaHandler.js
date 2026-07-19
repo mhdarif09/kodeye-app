@@ -196,9 +196,9 @@ const runScoringAsync = async (io, sessionId) => {
       score: 0,
       criteria: {},
       detectedSkills: [],
-      improvements: [],
+      improvements: ['Penilaian AI gagal diproses. Silakan coba lagi.'],
       secretObjectiveMet: false,
-      summary: 'Maaf, penilaian AI gagal diproses. Silakan coba lagi nanti.',
+      summary: 'Skor tidak tersedia karena layanan penilaian AI sedang bermasalah.',
     };
     try {
       const [[fallbackRow]] = await pool.query(

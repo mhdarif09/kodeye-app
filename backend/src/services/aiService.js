@@ -6,12 +6,10 @@ const logger = require('../utils/logger');
 
 const groq = new Groq({
   apiKey: config.groq.apiKey,
-  timeout: 30000, // 30s — don't let a slow API response hang the scoring forever
+  timeout: 60000,
 });
 
-// Model note: llama-3.3-70b-versatile supports response_format json_object on Groq.
-// If Groq adds llama-4 or a newer 70B+ variant in future, swap MODEL constant here.
-const MODEL = 'llama-3.3-70b-versatile';
+const MODELS = ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant'];
 const MAX_TOKENS = 1024;
 
 // ─── prompt builders ──────────────────────────────────────────────────────────
@@ -116,56 +114,49 @@ If workspace output is present, evaluate the technical quality of the team's sol
 const stripFences = (raw) => raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
 
 /**
- * Call Groq and return parsed JSON. Retries once if first parse fails.
+ * Call Groq and return parsed JSON. Tries multiple models, retries on parse failure.
  * @param {string} userPrompt
  * @returns {Promise<object>}
  */
 const callGroq = async (userPrompt) => {
-  const requestPayload = {
-    model: MODEL,
-    max_tokens: MAX_TOKENS,
-    response_format: { type: 'json_object' },
-    messages: [
-      { role: 'system', content: buildSystemPrompt() },
-      { role: 'user', content: userPrompt },
-    ],
-  };
+  const baseMessages = [
+    { role: 'system', content: buildSystemPrompt() },
+    { role: 'user', content: userPrompt },
+  ];
 
-  let rawContent;
-  try {
-    const completion = await groq.chat.completions.create(requestPayload);
-    rawContent = completion.choices[0]?.message?.content ?? '';
-  } catch (err) {
-    logger.error('Groq API call failed', { error: err.message });
-    throw err;
+  let lastError;
+  let lastRaw = '';
+
+  for (const model of MODELS) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const messages = attempt === 0 ? baseMessages : [
+          ...baseMessages,
+          { role: 'assistant', content: lastRaw },
+          { role: 'user', content: 'Your previous response was not valid JSON. Return ONLY the JSON object, nothing else.' },
+        ];
+
+        const completion = await groq.chat.completions.create({
+          model,
+          max_tokens: MAX_TOKENS,
+          messages,
+        });
+        lastRaw = completion.choices[0]?.message?.content ?? '';
+
+        return JSON.parse(stripFences(lastRaw));
+      } catch (err) {
+        lastError = err;
+        if (err instanceof SyntaxError) {
+          logger.warn(`Groq JSON parse failed (model=${model}), retrying...`);
+        } else {
+          logger.warn(`Groq API call failed (model=${model})`, { error: err.message });
+        }
+      }
+    }
   }
 
-  // Attempt 1
-  try {
-    return JSON.parse(stripFences(rawContent));
-  } catch (_) {
-    logger.warn('Groq response JSON parse failed on first attempt, retrying...');
-  }
-
-  // Retry once — ask model to fix its own output
-  try {
-    const retryCompletion = await groq.chat.completions.create({
-      ...requestPayload,
-      messages: [
-        ...requestPayload.messages,
-        { role: 'assistant', content: rawContent },
-        {
-          role: 'user',
-          content: 'Your previous response was not valid JSON. Return ONLY the JSON object, nothing else.',
-        },
-      ],
-    });
-    const retryContent = retryCompletion.choices[0]?.message?.content ?? '';
-    return JSON.parse(stripFences(retryContent));
-  } catch (retryErr) {
-    logger.error('Groq retry also failed to produce valid JSON', { error: retryErr.message, rawContent });
-    throw new Error('AI scoring failed: could not parse Groq response after retry');
-  }
+  logger.error('All Groq models exhausted', { error: lastError?.message });
+  throw lastError || new Error('AI scoring failed after all retries');
 };
 
 // ─── public API ───────────────────────────────────────────────────────────────
