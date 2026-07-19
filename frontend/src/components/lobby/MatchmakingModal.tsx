@@ -26,6 +26,21 @@ const DIFFICULTIES = [
   { label: "Lanjutan", value: "advanced" },
 ];
 
+interface MatchBriefingData {
+  sessionId: string;
+  role: string;
+  roleName: string;
+  briefing: string;
+  scenarioTitle: string;
+  category: string;
+  difficulty: string;
+  mode: string;
+  durationSeconds: number;
+  problem: string | null;
+  template: string | null;
+  templateLanguage: string | null;
+}
+
 interface MatchmakingModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -40,8 +55,9 @@ export function MatchmakingModal({ isOpen, onClose, initialMode = "duel", initia
   const [mode, setMode] = useState<"duel" | "coop">(initialMode);
   const [category, setCategory] = useState<string>(initialCategory || "debugging");
   const [difficulty, setDifficulty] = useState<string>("intermediate");
-  const [status, setStatus] = useState<"idle" | "searching" | "timeout">("idle");
+  const [status, setStatus] = useState<"idle" | "searching" | "timeout" | "briefing" | "waiting_partner">("idle");
   const [elapsed, setElapsed] = useState(0);
+  const [briefing, setBriefing] = useState<MatchBriefingData | null>(null);
 
   // Sync mode/category if props change while reopening
   useEffect(() => {
@@ -50,6 +66,7 @@ export function MatchmakingModal({ isOpen, onClose, initialMode = "duel", initia
       if (initialCategory) setCategory(initialCategory);
       setStatus("idle");
       setElapsed(0);
+      setBriefing(null);
     }
   }, [isOpen, initialMode, initialCategory]);
 
@@ -66,27 +83,34 @@ export function MatchmakingModal({ isOpen, onClose, initialMode = "duel", initia
     };
   }, [status]);
 
-  // Socket listener effect
+  // Socket listener effect (always listen for match_briefing and session_started)
   useEffect(() => {
-    if (!socket || status !== "searching") return;
+    if (!socket) return;
 
-    const onMatchFound = (payload: { sessionId: string }) => {
+    const onBriefing = (data: MatchBriefingData) => {
       toast.success("Match ditemukan!");
-      router.push(`/arena/${payload.sessionId}`);
+      setBriefing(data);
+      setStatus("briefing");
     };
 
-    const onMatchTimeout = () => {
+    const onTimeout = () => {
       setStatus("timeout");
     };
 
-    socket.on("match:found", onMatchFound);
-    socket.on("match:timeout", onMatchTimeout);
+    const onSessionStarted = (payload: { sessionId: string; startedAt: string; durationSeconds: number }) => {
+      router.push(`/arena/${payload.sessionId}`);
+    };
+
+    socket.on("match_briefing", onBriefing);
+    socket.on("match:timeout", onTimeout);
+    socket.on("session_started", onSessionStarted);
 
     return () => {
-      socket.off("match:found", onMatchFound);
-      socket.off("match:timeout", onMatchTimeout);
+      socket.off("match_briefing", onBriefing);
+      socket.off("match:timeout", onTimeout);
+      socket.off("session_started", onSessionStarted);
     };
-  }, [socket, status, router]);
+  }, [socket, router]);
 
   const handleStartSearch = async () => {
     try {
@@ -114,7 +138,14 @@ export function MatchmakingModal({ isOpen, onClose, initialMode = "duel", initia
       }
     }
     setStatus("idle");
+    setBriefing(null);
     onClose();
+  };
+
+  const handleStartSession = () => {
+    if (!socket || !briefing) return;
+    socket.emit("player_ready", { sessionId: briefing.sessionId });
+    setStatus("waiting_partner");
   };
 
   const formatTime = (seconds: number) => {
@@ -126,114 +157,153 @@ export function MatchmakingModal({ isOpen, onClose, initialMode = "duel", initia
   if (!isOpen) return null;
 
   return (
-    <Modal isOpen={isOpen} onClose={status === "searching" ? () => {} : handleCancelSearch} className="sm:max-w-md">
-      <div className="flex flex-col space-y-6">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold tracking-tight">Cari Lawan</h2>
-          <p className="text-sm text-muted-foreground mt-1">Uji kemampuan komunikasimu secara real-time</p>
-        </div>
-
-        {status === "idle" && (
+    <Modal
+      isOpen={isOpen}
+      onClose={status === "searching" || status === "briefing" || status === "waiting_partner" ? () => {} : handleCancelSearch}
+      className={cn(status === "briefing" || status === "waiting_partner" ? "sm:max-w-2xl" : "sm:max-w-md")}
+    >
+      {status === "idle" && (
+        <div className="flex flex-col space-y-6">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold tracking-tight">Cari Lawan</h2>
+            <p className="text-sm text-muted-foreground mt-1">Uji kemampuan komunikasimu secara real-time</p>
+          </div>
           <div className="space-y-6">
             <div className="space-y-3">
               <label className="text-sm font-medium">Mode Matchmaking</label>
               <div className="flex gap-2">
-                <Button
-                  variant={mode === "duel" ? "primary" : "secondary"}
-                  className="flex-1"
-                  onClick={() => setMode("duel")}
-                >
+                <Button variant={mode === "duel" ? "primary" : "secondary"} className="flex-1" onClick={() => setMode("duel")}>
                   ⚔️ Duel
                 </Button>
-                <Button
-                  variant={mode === "coop" ? "primary" : "secondary"}
-                  className="flex-1"
-                  onClick={() => setMode("coop")}
-                >
+                <Button variant={mode === "coop" ? "primary" : "secondary"} className="flex-1" onClick={() => setMode("coop")}>
                   🤝 Co-op
                 </Button>
               </div>
             </div>
-
             <div className="space-y-3">
               <label className="text-sm font-medium">Kategori</label>
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="w-full h-10 rounded-md border border-input bg-transparent px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              >
+              <select value={category} onChange={(e) => setCategory(e.target.value)}
+                className="w-full h-10 rounded-md border border-input bg-transparent px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
                 {CATEGORIES.map((c) => (
-                  <option key={c.value} value={c.value} className="bg-background">
-                    {c.label}
-                  </option>
+                  <option key={c.value} value={c.value} className="bg-background">{c.label}</option>
                 ))}
               </select>
             </div>
-
             <div className="space-y-3">
               <label className="text-sm font-medium">Level Kesulitan</label>
-              <select
-                value={difficulty}
-                onChange={(e) => setDifficulty(e.target.value)}
-                className="w-full h-10 rounded-md border border-input bg-transparent px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              >
+              <select value={difficulty} onChange={(e) => setDifficulty(e.target.value)}
+                className="w-full h-10 rounded-md border border-input bg-transparent px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
                 {DIFFICULTIES.map((d) => (
-                  <option key={d.value} value={d.value} className="bg-background">
-                    {d.label}
-                  </option>
+                  <option key={d.value} value={d.value} className="bg-background">{d.label}</option>
                 ))}
               </select>
             </div>
-
             <div className="flex gap-3 justify-end pt-4 border-t border-border">
               <Button variant="ghost" onClick={handleCancelSearch}>Batal</Button>
               <Button onClick={handleStartSearch}>Mulai Cari</Button>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {status === "searching" && (
-          <div className="flex flex-col items-center justify-center py-8 space-y-6">
-            <div className="relative">
-              <div className="h-16 w-16 animate-spin rounded-full border-4 border-muted border-t-primary" />
-              <div className="absolute inset-0 flex items-center justify-center text-xs font-bold text-primary">
-                {formatTime(elapsed)}
+      {status === "searching" && (
+        <div className="flex flex-col items-center justify-center py-8 space-y-6">
+          <div className="relative">
+            <div className="h-16 w-16 animate-spin rounded-full border-4 border-muted border-t-primary" />
+            <div className="absolute inset-0 flex items-center justify-center text-xs font-bold text-primary">{formatTime(elapsed)}</div>
+          </div>
+          <div className="text-center">
+            <h3 className="text-lg font-semibold animate-pulse">Mencari {mode === "duel" ? "lawan" : "partner"}...</h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              {CATEGORIES.find(c => c.value === category)?.label} · {DIFFICULTIES.find(d => d.value === difficulty)?.label}
+            </p>
+          </div>
+          <Button variant="secondary" onClick={handleCancelSearch} className="w-full max-w-[200px]">Batal Cari</Button>
+        </div>
+      )}
+
+      {status === "briefing" && briefing && (
+        <div className="flex flex-col space-y-6">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold tracking-tight">MATCH DITEMUKAN</h2>
+            <p className="text-sm text-muted-foreground mt-1">Baca briefing sebelum memulai sesi</p>
+          </div>
+
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div className="bg-secondary/30 rounded-md p-3">
+                <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Kategori</span>
+                <p className="font-medium capitalize">{briefing.category}</p>
+              </div>
+              <div className="bg-secondary/30 rounded-md p-3">
+                <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Level</span>
+                <p className="font-medium capitalize">{DIFFICULTIES.find(d => d.value === briefing.difficulty)?.label || briefing.difficulty}</p>
               </div>
             </div>
-            
-            <div className="text-center">
-              <h3 className="text-lg font-semibold animate-pulse">Mencari {mode === "duel" ? "lawan" : "partner"}...</h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                {CATEGORIES.find(c => c.value === category)?.label} · {DIFFICULTIES.find(d => d.value === difficulty)?.label}
-              </p>
+
+            <div className="bg-secondary/30 rounded-md p-3">
+              <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Skenario</span>
+              <p className="font-medium">{briefing.scenarioTitle}</p>
             </div>
 
-            <Button variant="secondary" onClick={handleCancelSearch} className="w-full max-w-[200px]">
-              Batal Cari
-            </Button>
+            <div className="bg-primary/10 border border-primary/20 rounded-md p-3">
+              <span className="text-[10px] uppercase tracking-wider font-semibold text-primary">Peran Kamu</span>
+              <p className="font-semibold text-base">{briefing.roleName}</p>
+            </div>
+
+            <div>
+              <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Briefing</span>
+              <div className="mt-1 text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap bg-secondary/30 rounded-md p-3 border border-border">
+                {briefing.briefing}
+              </div>
+            </div>
+
+            {briefing.problem && (
+              <div>
+                <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Soal</span>
+                <div className="mt-1 text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap bg-secondary/30 rounded-md p-3 border border-border">
+                  <p className="mb-2">{briefing.problem}</p>
+                  {briefing.template && (
+                    <pre className="text-xs bg-background/80 rounded p-3 overflow-x-auto border border-border">
+                      <code>{briefing.template}</code>
+                    </pre>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
-        )}
 
-        {status === "timeout" && (
-          <div className="flex flex-col items-center py-6 space-y-6">
-            <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center text-2xl">
-              🕒
-            </div>
-            <div className="text-center">
-              <h3 className="text-lg font-semibold">Pencarian Waktu Habis</h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                Tidak ada {mode === "duel" ? "lawan" : "partner"} yang tersedia saat ini.
-              </p>
-            </div>
-
-              <div className="w-full space-y-3">
-              <Button variant="ghost" onClick={handleCancelSearch} className="w-full">
-                Tutup
-              </Button>
-            </div>
+          <div className="flex gap-3 justify-end pt-4 border-t border-border">
+            <Button variant="ghost" onClick={handleCancelSearch}>Batal</Button>
+            <Button onClick={handleStartSession}>Mulai Sesi</Button>
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      {status === "waiting_partner" && (
+        <div className="flex flex-col items-center justify-center py-8 space-y-6">
+          <div className="relative">
+            <div className="h-16 w-16 animate-spin rounded-full border-4 border-muted border-t-primary" />
+          </div>
+          <div className="text-center">
+            <h3 className="text-lg font-semibold">Menunggu Partner...</h3>
+            <p className="text-sm text-muted-foreground mt-1">Kamu akan masuk ke chat setelah partner siap</p>
+          </div>
+        </div>
+      )}
+
+      {status === "timeout" && (
+        <div className="flex flex-col items-center py-6 space-y-6">
+          <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center text-2xl">🕒</div>
+          <div className="text-center">
+            <h3 className="text-lg font-semibold">Pencarian Waktu Habis</h3>
+            <p className="text-sm text-muted-foreground mt-1">Tidak ada {mode === "duel" ? "lawan" : "partner"} yang tersedia saat ini.</p>
+          </div>
+          <div className="w-full space-y-3">
+            <Button variant="ghost" onClick={handleCancelSearch} className="w-full">Tutup</Button>
+          </div>
+        </div>
+      )}
     </Modal>
   );
 }

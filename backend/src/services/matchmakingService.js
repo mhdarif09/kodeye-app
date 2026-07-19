@@ -110,64 +110,42 @@ const appendMessage = async (sessionId, msg) => {
 };
 
 /**
- * Build a bilingual (ID + EN) private briefing for one participant.
+ * Build an Indonesian-only private briefing for one participant.
  * Secret objectives are NEVER included.
- * Uses Indonesian columns first, falls back to English.
  */
 const formatBriefing = (scenario, role) => {
   const isRoleA = role === 'role_a';
   const titleId = scenario.title_id || scenario.title;
-  const roleNameId = isRoleA
+  const roleName = isRoleA
     ? (scenario.role_a_name_id || scenario.role_a_name || 'Peran A')
     : (scenario.role_b_name_id || scenario.role_b_name || 'Peran B');
-  const roleNameEn = isRoleA
-    ? (scenario.role_a_name || scenario.role_a_name_id || 'Role A')
-    : (scenario.role_b_name || scenario.role_b_name_id || 'Role B');
-  const briefingId = isRoleA
+  const briefing = isRoleA
     ? (scenario.role_a_briefing_id || scenario.role_a_briefing || '')
     : (scenario.role_b_briefing_id || scenario.role_b_briefing || '');
-  const briefingEn = isRoleA
-    ? (scenario.role_a_briefing || scenario.role_a_briefing_id || '')
-    : (scenario.role_b_briefing || scenario.role_b_briefing_id || '');
   const diff = difficultyLabels[scenario.difficulty] || scenario.difficulty || '-';
-  const diffEn = scenario.difficulty || '-';
-  const modeId = scenario.mode === 'duel' ? '⚔️ Duel' : '🤝 Co-op';
-  const modeEn = scenario.mode === 'duel' ? 'Duel' : 'Co-op';
+  const modeLabel = scenario.mode === 'duel' ? '⚔️ Duel' : '🤝 Co-op';
 
   return `📋 **${titleId}**
-Kategori: \`${scenario.category || '-'}\` · Mode: \`${modeId}\` · Level: \`${diff}\`
+Kategori: \`${scenario.category || '-'}\` · Mode: \`${modeLabel}\` · Level: \`${diff}\`
 
 ---
 
-**🇮🇩 Peran kamu: ${roleNameId}**
+**Peran kamu: ${roleName}**
 
-${briefingId}
-
----
-
-**🇬🇧 Your Role: ${roleNameEn}**
-Category: \`${scenario.category || '-'}\` · Mode: \`${modeEn}\` · Level: \`${diffEn}\`
-
-${briefingEn}`;
+${briefing}`;
 };
 
 /**
- * Build a bilingual start hint (chat-only, no workspace).
+ * Build an Indonesian-only start hint.
  */
 const formatStartHint = (scenario) => {
-  const aNameId = scenario.role_a_name_id || scenario.role_a_name || 'Peran A';
-  const aNameEn = scenario.role_a_name || scenario.role_a_name_id || 'Role A';
-  const bNameId = scenario.role_b_name_id || scenario.role_b_name || 'Peran B';
-  const bNameEn = scenario.role_b_name || scenario.role_b_name_id || 'Role B';
+  const aName = scenario.role_a_name_id || scenario.role_a_name || 'Peran A';
+  const bName = scenario.role_b_name_id || scenario.role_b_name || 'Peran B';
 
   if (scenario.mode === 'coop') {
-    return `🇮🇩 ${aNameId} dan ${bNameId}, silakan mulai diskusi untuk menyelesaikan situasi ini bersama.
-
-🇬🇧 ${aNameEn} and ${bNameEn}, please start discussing to solve this situation together.`;
+    return `${aName} dan ${bName}, silakan mulai diskusi untuk menyelesaikan situasi ini bersama.`;
   }
-  return `🇮🇩 ${aNameId}, silakan mulai percakapan sesuai skenario kamu.
-
-🇬🇧 ${aNameEn}, please start the conversation according to your scenario.`;
+  return `${aName}, silakan mulai percakapan sesuai skenario kamu.`;
 };
 
 const createSession = async (entryA, entryB, mode, category) => {
@@ -215,6 +193,21 @@ const createSession = async (entryA, entryB, mode, category) => {
   const textB = formatBriefing(scenario, 'role_b');
   await appendMessage(sessionId, { userId: 'system', role: 'system', targetRole: 'role_b', text: textB, ts: now });
 
+  // Artifact block — problem + template jika initial_content tersedia (broadcast ke room)
+  const ic = scenario.initial_content
+    ? (typeof scenario.initial_content === 'string' ? JSON.parse(scenario.initial_content) : scenario.initial_content)
+    : null;
+  if (ic && ic.problem) {
+    const lang = ic.language || scenario.workspace_type || '';
+    const artifactText = `**🗂️ Soal:**
+${ic.problem || ''}
+
+\`\`\`${lang}
+${ic.template || ''}
+\`\`\``;
+    await appendMessage(sessionId, { userId: 'system', role: 'system', text: artifactText, ts: now });
+  }
+
   // Start hint (no targetRole — visible to both)
   const hintText = formatStartHint(scenario);
   await appendMessage(sessionId, { userId: 'system', role: 'system', text: hintText, ts: now });
@@ -223,6 +216,17 @@ const createSession = async (entryA, entryB, mode, category) => {
     sessionId,
     scenarioId: scenario.id,
     mode,
+    category,
+    difficulty: scenario.difficulty,
+    scenarioTitle: scenario.title_id || scenario.title,
+    roleAName: scenario.role_a_name_id || scenario.role_a_name,
+    roleBName: scenario.role_b_name_id || scenario.role_b_name,
+    briefingA: scenario.role_a_briefing_id || scenario.role_a_briefing,
+    briefingB: scenario.role_b_briefing_id || scenario.role_b_briefing,
+    problem: ic?.problem || null,
+    template: ic?.template || null,
+    templateLanguage: ic?.language || scenario.workspace_type || null,
+    durationSeconds: scenario.duration_seconds,
     userA: { userId: userA.userId, role: 'role_a' },
     userB: { userId: userB.userId, role: 'role_b' },
   };
@@ -289,8 +293,24 @@ const findMatch = async () => {
       if (!matchData) continue; // scenario not found
 
       if (_io) {
-        _io.to(`user:${matchData.userA.userId}`).emit('match:found', matchData);
-        _io.to(`user:${matchData.userB.userId}`).emit('match:found', matchData);
+        const emitBriefing = (userId, role, roleName, briefing) => {
+          _io.to(`user:${userId}`).emit('match_briefing', {
+            sessionId: matchData.sessionId,
+            role,
+            roleName,
+            briefing,
+            scenarioTitle: matchData.scenarioTitle,
+            category: matchData.category,
+            difficulty: matchData.difficulty,
+            mode: matchData.mode,
+            durationSeconds: matchData.durationSeconds,
+            problem: matchData.problem,
+            template: matchData.template,
+            templateLanguage: matchData.templateLanguage,
+          });
+        };
+        emitBriefing(matchData.userA.userId, 'role_a', matchData.roleAName, matchData.briefingA);
+        emitBriefing(matchData.userB.userId, 'role_b', matchData.roleBName, matchData.briefingB);
       }
     }
   } catch (err) {

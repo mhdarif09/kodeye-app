@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
 import type { ArenaMessage } from "@/hooks/useArenaSocket";
 
@@ -12,6 +14,21 @@ interface ChatPanelProps {
   opponentLeft: boolean;
   opponentFinished: boolean;
 }
+
+const codeBlock = ({ className, children, ...props }: any) => {
+  const match = /language-(\w+)/.exec(className || "");
+  return (
+    <pre className="text-xs bg-background/80 rounded p-3 my-2 overflow-x-auto border border-border">
+      <code className={match ? `language-${match[1]}` : ""} {...props}>
+        {children}
+      </code>
+    </pre>
+  );
+};
+
+const inlineCode = ({ children, ...props }: any) => (
+  <code className="bg-muted/50 px-1 rounded text-[11px]" {...props}>{children}</code>
+);
 
 function formatTime(ts: string) {
   try {
@@ -29,7 +46,6 @@ export function ChatPanel({ messages, myRole, myUserId, onSend, opponentLeft, op
   const [input, setInput] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll on new messages
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -49,7 +65,7 @@ export function ChatPanel({ messages, myRole, myUserId, onSend, opponentLeft, op
   };
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 border-l border-border bg-background">
+    <div className="flex flex-col flex-1 min-h-0 bg-background">
       {/* Status banners */}
       {opponentLeft && (
         <div className="px-4 py-2 bg-amber-500/10 border-b border-amber-500/20 text-amber-500 text-xs font-medium">
@@ -94,7 +110,6 @@ export function ChatPanel({ messages, myRole, myUserId, onSend, opponentLeft, op
 
           return (
             <div key={idx} className={cn("flex gap-3", isMe ? "flex-row-reverse" : "flex-row")}>
-              {/* Avatar */}
               <div
                 className={cn(
                   "h-8 w-8 shrink-0 rounded-full flex items-center justify-center text-xs font-bold",
@@ -106,7 +121,6 @@ export function ChatPanel({ messages, myRole, myUserId, onSend, opponentLeft, op
                 {initial}
               </div>
 
-              {/* Bubble */}
               <div className={cn("flex flex-col max-w-[75%]", isMe ? "items-end" : "items-start")}>
                 <div className="flex items-baseline gap-2 mb-1">
                   <span className="text-xs font-medium text-foreground">
@@ -116,13 +130,18 @@ export function ChatPanel({ messages, myRole, myUserId, onSend, opponentLeft, op
                 </div>
                 <div
                   className={cn(
-                    "rounded-xl px-4 py-2.5 text-sm leading-relaxed",
+                    "rounded-xl px-4 py-2.5 text-sm leading-relaxed [&_pre]:my-2 [&_pre]:text-xs [&_pre]:bg-background/80 [&_pre]:rounded [&_pre]:p-3 [&_pre]:overflow-x-auto [&_pre]:border [&_pre]:border-border [&_code]:text-[11px]",
                     isMe
                       ? "bg-primary text-primary-foreground rounded-tr-sm"
                       : "bg-secondary text-secondary-foreground rounded-tl-sm"
                   )}
                 >
-                  {msg.text}
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{ pre: codeBlock, code: inlineCode }}
+                  >
+                    {msg.text}
+                  </ReactMarkdown>
                 </div>
               </div>
             </div>

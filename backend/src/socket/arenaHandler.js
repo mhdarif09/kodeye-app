@@ -19,8 +19,13 @@ const getSessionWithScenario = async (sessionId) => {
        s.status, s.started_at,
         sc.duration_seconds,
         sc.title AS scenario_title,
-        sc.role_a_briefing, sc.role_a_secret_objective,
-        sc.role_b_briefing, sc.role_b_secret_objective,
+        sc.title_id,
+        sc.role_a_briefing, sc.role_a_briefing_id,
+        sc.role_a_secret_objective,
+        sc.role_a_name, sc.role_a_name_id,
+        sc.role_b_briefing, sc.role_b_briefing_id,
+        sc.role_b_secret_objective,
+        sc.role_b_name, sc.role_b_name_id,
         sc.ai_criteria, sc.resource_links, sc.tags,
         sc.workspace_type, sc.initial_content,
         sc.skill_category, sc.has_problem
@@ -36,12 +41,13 @@ const getSessionWithScenario = async (sessionId) => {
  * Return only the briefing fields the requesting user is allowed to see.
  * Never leak the opponent's briefing or any secret objective to the client.
  * Secret objectives are server-side only, used solely in the judge/verdict step.
+ * Returns Indonesian briefing first, falls back to English.
  */
 const filterBriefingForRole = (session, role) => {
   if (role === 'role_a') {
-    return { role: 'role_a', briefing: session.role_a_briefing };
+    return { role: 'role_a', briefing: session.role_a_briefing_id || session.role_a_briefing };
   }
-  return { role: 'role_b', briefing: session.role_b_briefing };
+  return { role: 'role_b', briefing: session.role_b_briefing_id || session.role_b_briefing };
 };
 
 /** Determine which role a userId holds in the session. Returns null if not a participant. */
@@ -265,12 +271,16 @@ const registerArenaHandler = (io, socket) => {
       // Parse workspace info
       const workspaceType = session.workspace_type || 'chat';
       const initialContent = parseJsonSafe(session.initial_content) || null;
+      const problem = initialContent?.problem || null;
+      const problemTemplate = initialContent?.template || null;
+      const templateLanguage = initialContent?.language || null;
 
       socket.emit('arena:joined', {
         sessionId,
         role: myBriefing.role,
         briefing: myBriefing.briefing,
-        scenarioTitle: session.scenario_title,
+        scenarioTitle: session.title_id || session.scenario_title,
+        scenarioTitleEn: session.scenario_title,
         mode: session.mode,
         durationSeconds: session.duration_seconds,
         aiCriteria: parseJson(session.ai_criteria),
@@ -281,6 +291,9 @@ const registerArenaHandler = (io, socket) => {
         isBotOpponent,
         workspaceType,
         initialContent,
+        problem,
+        problemTemplate,
+        templateLanguage,
         skillCategory: session.skill_category || null,
         hasProblem: !!session.has_problem,
       });
@@ -301,7 +314,74 @@ const registerArenaHandler = (io, socket) => {
     }
   });
 
-  // ── arena:ready ────────────────────────────────────────────────────────────
+  // ── player_ready (from match briefing, before arena:join) ──────────────────
+  socket.on('player_ready', async ({ sessionId } = {}) => {
+    try {
+      if (!sessionId) return socket.emit('arena:error', { message: 'sessionId required' });
+
+      const session = await getSessionWithScenario(sessionId);
+      if (!session) return socket.emit('arena:error', { message: 'Session not found' });
+
+      if (!readyMap.has(sessionId)) readyMap.set(sessionId, new Set());
+      readyMap.get(sessionId).add(userId);
+
+      const readyCount = readyMap.get(sessionId).size;
+      logger.info(`player_ready | user=${userId} session=${sessionId} (${readyCount}/2 ready)`);
+
+      if (readyCount >= 2) {
+        readyMap.delete(sessionId);
+
+        await pool.query(
+          `UPDATE sessions SET status = 'in_progress', started_at = NOW() WHERE id = ? AND status = 'waiting'`,
+          [sessionId]
+        );
+
+        const startedAt = new Date().toISOString();
+
+        io.to(`user:${session.user_a_id}`).emit('session_started', {
+          sessionId,
+          startedAt,
+          durationSeconds: session.duration_seconds,
+        });
+        io.to(`user:${session.user_b_id}`).emit('session_started', {
+          sessionId,
+          startedAt,
+          durationSeconds: session.duration_seconds,
+        });
+
+        logger.info(`session_started | session=${sessionId}`);
+
+        // ── server-side arena timeout ──────────────────────────────────────────
+        clearArenaTimer(sessionId);
+        const timer = setTimeout(async () => {
+          try {
+            await pool.query(
+              `UPDATE sessions SET status = 'completed', ended_at = NOW() WHERE id = ? AND status = 'in_progress'`,
+              [sessionId]
+            );
+            io.to(`session:${sessionId}`).emit('arena:timeout', {
+              sessionId,
+              message: 'Time is up! The session has ended.',
+              endedAt: new Date().toISOString(),
+            });
+            arenaTimers.delete(sessionId);
+            runScoringAsync(io, sessionId);
+          } catch (err) {
+            logger.error(`Arena timeout handler error session=${sessionId}`, { error: err.message });
+          }
+        }, (session.duration_seconds || 600) * 1000);
+        arenaTimers.set(sessionId, timer);
+      } else {
+        // Notify the ready player that they're waiting
+        socket.emit('player_ready_ack', { waiting: true });
+      }
+    } catch (err) {
+      logger.error('player_ready error', err);
+      socket.emit('arena:error', { message: 'Failed to start session' });
+    }
+  });
+
+  // ── arena:ready (legacy, kept for bot sessions) ────────────────────────────
   socket.on('arena:ready', async () => {
     try {
       const sessionId = socket.data.sessionId;

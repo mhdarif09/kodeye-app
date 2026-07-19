@@ -26,6 +26,9 @@ export interface ArenaState {
   opponentFinished: boolean;
   opponentLeft: boolean;
   isTimeout: boolean;
+  problem: string | null;
+  problemTemplate: string | null;
+  templateLanguage: string | null;
 }
 
 export const useArenaSocket = (sessionId: string) => {
@@ -44,6 +47,9 @@ export const useArenaSocket = (sessionId: string) => {
     opponentFinished: false,
     opponentLeft: false,
     isTimeout: false,
+    problem: null,
+    problemTemplate: null,
+    templateLanguage: null,
   });
 
   useEffect(() => {
@@ -65,6 +71,9 @@ export const useArenaSocket = (sessionId: string) => {
         status: data.status,
         startedAt: data.startedAt,
         isStarted: data.status === "in_progress",
+        problem: data.problem || null,
+        problemTemplate: data.problemTemplate || null,
+        templateLanguage: data.templateLanguage || null,
       }));
     });
 
@@ -115,10 +124,6 @@ export const useArenaSocket = (sessionId: string) => {
     };
   }, [socket, isConnected, sessionId]);
 
-  const sendReady = useCallback(() => {
-    socket?.emit("arena:ready");
-  }, [socket]);
-
   const sendMessage = useCallback((text: string) => {
     socket?.emit("arena:message", { text });
   }, [socket]);
@@ -133,7 +138,6 @@ export const useArenaSocket = (sessionId: string) => {
 
   return {
     arenaState,
-    sendReady,
     sendMessage,
     sendFinish,
     sendReport,

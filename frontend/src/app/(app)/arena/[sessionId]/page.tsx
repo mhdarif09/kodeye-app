@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { use } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
@@ -8,8 +8,6 @@ import toast from "react-hot-toast";
 import { useAuthStore } from "@/store/authStore";
 import { useArenaSocket } from "@/hooks/useArenaSocket";
 
-import { ReadyScreen } from "@/components/arena/ReadyScreen";
-import { BriefingPanel } from "@/components/arena/BriefingPanel";
 import { ChatPanel } from "@/components/arena/ChatPanel";
 import { Timer } from "@/components/arena/Timer";
 import { QuickActions } from "@/components/arena/QuickActions";
@@ -19,12 +17,8 @@ export default function ArenaPage({ params }: { params: Promise<{ sessionId: str
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
 
-  const [isReadyWaiting, setIsReadyWaiting] = useState(false);
-  const [isBriefingCollapsed, setIsBriefingCollapsed] = useState(false);
-
   const {
     arenaState,
-    sendReady,
     sendMessage,
     sendFinish,
     sendReport,
@@ -34,7 +28,6 @@ export default function ArenaPage({ params }: { params: Promise<{ sessionId: str
     isJoined,
     isStarted,
     role,
-    briefing,
     scenarioTitle,
     mode,
     durationSeconds,
@@ -43,6 +36,9 @@ export default function ArenaPage({ params }: { params: Promise<{ sessionId: str
     opponentLeft,
     opponentFinished,
     isTimeout,
+    problem,
+    problemTemplate,
+    templateLanguage,
   } = arenaState;
 
   useEffect(() => {
@@ -63,11 +59,6 @@ export default function ArenaPage({ params }: { params: Promise<{ sessionId: str
     return () => clearTimeout(t);
   }, [opponentLeft]);
 
-  const handleReady = () => {
-    sendReady();
-    setIsReadyWaiting(true);
-  };
-
   if (!isJoined) {
     return (
       <div className="flex h-screen items-center justify-center bg-background flex-col gap-4">
@@ -79,16 +70,6 @@ export default function ArenaPage({ params }: { params: Promise<{ sessionId: str
 
   return (
     <div className="flex flex-col h-dvh bg-background">
-      {!isStarted && isJoined && (
-        <ReadyScreen
-          scenarioTitle={scenarioTitle}
-          role={role}
-          briefing={briefing}
-          onReady={handleReady}
-          isWaiting={isReadyWaiting}
-        />
-      )}
-
       <header className="flex items-center justify-between px-4 py-2.5 border-b border-border bg-background z-10 shrink-0">
         <div className="flex items-center gap-3">
           <button
@@ -120,25 +101,28 @@ export default function ArenaPage({ params }: { params: Promise<{ sessionId: str
         </div>
       </header>
 
-      <div className="flex flex-1 min-h-0">
-        <BriefingPanel
-          role={role}
-          scenarioTitle={scenarioTitle}
-          briefing={briefing}
-          mode={mode}
-          isCollapsed={isBriefingCollapsed}
-          onToggle={() => setIsBriefingCollapsed((v) => !v)}
-        />
+      {problem && (
+        <div className="px-4 py-3 border-b border-border bg-muted/20 shrink-0">
+          <div className="max-w-3xl mx-auto">
+            <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Soal</span>
+            <p className="text-sm text-foreground/90 mt-1 whitespace-pre-wrap">{problem}</p>
+            {problemTemplate && (
+              <pre className="mt-2 text-xs bg-background/80 rounded p-3 overflow-x-auto border border-border">
+                <code>{problemTemplate}</code>
+              </pre>
+            )}
+          </div>
+        </div>
+      )}
 
-        <ChatPanel
-          messages={messages}
-          myRole={role}
-          myUserId={user?.id ?? ""}
-          onSend={sendMessage}
-          opponentLeft={opponentLeft}
-          opponentFinished={opponentFinished}
-        />
-      </div>
+      <ChatPanel
+        messages={messages}
+        myRole={role}
+        myUserId={user?.id ?? ""}
+        onSend={sendMessage}
+        opponentLeft={opponentLeft}
+        opponentFinished={opponentFinished}
+      />
     </div>
   );
 }
