@@ -7,7 +7,6 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
-import { MatchmakingModal } from "@/components/lobby/MatchmakingModal";
 import { Button } from "@/components/ui/Button";
 import { CodeQuestionEditor } from "@/components/quiz/CodeQuestionEditor";
 
@@ -68,12 +67,6 @@ export default function LevelReaderPage() {
   const [item, setItem] = useState<LevelDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [locked, setLocked] = useState(false);
-  const [actionLoading, setActionLoading] = useState(false);
-  const [matchModal, setMatchModal] = useState(false);
-  const [matchMode, setMatchMode] = useState<"duel" | "coop" | "ai">("duel");
-  const [aiScenarioId, setAiScenarioId] = useState<string | undefined>();
-  const [inviteLoading, setInviteLoading] = useState(false);
-  const [showActions, setShowActions] = useState(false);
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
   const [quizAnswers, setQuizAnswers] = useState<number[]>([]);
   const [quizResults, setQuizResults] = useState<{ correct: boolean; correctIndex: number }[] | null>(null);
@@ -128,49 +121,6 @@ export default function LevelReaderPage() {
         router.push("/kurikulum");
       });
   }, [category, level]);
-
-  const handleAction = async () => {
-    if (!item) return;
-    const mode = item.mode;
-
-    if (mode === "solo") {
-      if (quizQuestions.length > 0 && !quizSubmitted) {
-        // Scroll to quiz section
-        const quizEl = document.getElementById("quiz-section");
-        if (quizEl) {
-          quizEl.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
-        toast("Selesaikan kuis dulu untuk melanjutkan", { icon: "📝" });
-        return;
-      }
-      if (quizQuestions.length > 0 && quizSubmitted && !quizResults?.every((r) => r.correct)) {
-        toast("Kuis belum lulus. Coba lagi!", { icon: "🔁" });
-        return;
-      }
-      // Quiz passed or no quiz → open AI practice
-      setMatchMode("ai");
-      setAiScenarioId(item.id);
-      setMatchModal(true);
-    } else if (mode === "duel" || mode === "coop") {
-      setMatchMode(mode);
-      setShowActions(true);
-    }
-  };
-
-  const handleCreateInvite = async () => {
-    if (!item) return;
-    setInviteLoading(true);
-    try {
-      const res = await api.post("/api/sessions/create-invite", { mode: item.mode, scenarioId: item.id });
-      const link = res.data.data.inviteLink;
-      await navigator.clipboard.writeText(link);
-      toast.success("Link undangan disalin!");
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Gagal membuat undangan");
-    } finally {
-      setInviteLoading(false);
-    }
-  };
 
   const handleSubmitQuiz = async () => {
     if (!item || submittingQuiz) return;
@@ -272,40 +222,20 @@ export default function LevelReaderPage() {
 
             {!locked && (
               <div className="space-y-3">
-                {item.mode === "solo" ? (
-                  <button
-                    onClick={handleAction}
-                    disabled={actionLoading}
-                    className="inline-flex h-10 px-5 rounded-xl bg-gradient-to-r from-primary to-primary/90 text-primary-foreground text-sm font-bold hover:opacity-90 transition-all duration-300 items-center gap-2 shadow-lg shadow-primary/20 disabled:opacity-50"
+                {quizQuestions.length > 0 && !quizSubmitted && (
+                  <Button
+                    variant="secondary"
+                    size="lg"
+                    className="w-full"
+                    onClick={() => document.getElementById("quiz-section")?.scrollIntoView({ behavior: "smooth" })}
                   >
-                    <span>{actionLoading ? "⏳" : modeAction.icon}</span>
-                    {actionLoading ? "Memulai..." : modeAction.label}
-                  </button>
-                ) : !showActions ? (
-                  <button
-                    onClick={() => setShowActions(true)}
-                    className="inline-flex h-10 px-5 rounded-xl bg-gradient-to-r from-primary to-primary/90 text-primary-foreground text-sm font-bold hover:opacity-90 transition-all items-center gap-2 shadow-lg shadow-primary/20"
-                  >
-                    <span>{modeAction.icon}</span>
-                    {modeAction.label}
-                  </button>
-                ) : (
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      onClick={() => { setMatchModal(true); }}
-                      className="inline-flex h-10 px-5 rounded-xl bg-muted/50 border border-border text-sm font-medium hover:bg-muted/80 transition-all items-center gap-2"
-                    >
-                      🎲 Cari Lawan Acak
-                    </button>
-                    <button
-                      onClick={handleCreateInvite}
-                      disabled={inviteLoading}
-                      className="inline-flex h-10 px-5 rounded-xl bg-muted/50 border border-border text-sm font-medium hover:bg-muted/80 transition-all items-center gap-2 disabled:opacity-50"
-                    >
-                      <span>{inviteLoading ? "⏳" : "🔗"}</span>
-                      {inviteLoading ? "Membuat..." : "Undang Teman"}
-                    </button>
-                  </div>
+                    Mulai Kuis {quizQuestions.length} Soal
+                  </Button>
+                )}
+                {quizQuestions.length === 0 && (
+                  <p className="text-center text-sm text-muted-foreground py-4">
+                    Materi ini belum memiliki kuis. Silakan baca dan pahami kontennya.
+                  </p>
                 )}
               </div>
             )}
@@ -508,14 +438,6 @@ export default function LevelReaderPage() {
           </div>
         </div>
       </div>
-
-      <MatchmakingModal
-        isOpen={matchModal}
-        onClose={() => { setMatchModal(false); setAiScenarioId(undefined); }}
-        initialMode={matchMode}
-        initialCategory={CATEGORY_TO_SKILL[category] || undefined}
-        aiScenarioId={aiScenarioId}
-      />
     </div>
   );
 }

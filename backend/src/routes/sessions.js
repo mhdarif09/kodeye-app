@@ -1,7 +1,6 @@
 'use strict';
 
 const { v4: uuidv4 } = require('uuid');
-const crypto = require('crypto');
 const express = require('express');
 const pool = require('../db/mysql');
 const redisClient = require('../db/redis');
@@ -29,126 +28,6 @@ async function ensureBotUser() {
   );
   logger.info('AI bot user created');
 }
-
-// POST /api/sessions/create-invite
-router.post('/create-invite', async (req, res, next) => {
-  try {
-    const userId = req.user.id;
-    const { mode = 'duel', scenarioId } = req.body;
-
-    // Pick scenario
-    let scenario;
-    if (scenarioId) {
-      const [rows] = await pool.query('SELECT * FROM scenarios WHERE id = ? AND is_active = 1', [scenarioId]);
-      scenario = rows[0];
-      if (!scenario) return next(new AppError('Scenario not found', 404));
-    } else {
-      const [rows] = await pool.query(
-        'SELECT * FROM scenarios WHERE mode = ? AND is_active = 1 ORDER BY RAND() LIMIT 1',
-        [mode]
-      );
-      scenario = rows[0];
-      if (!scenario) return next(new AppError('No available scenarios', 404));
-    }
-
-    const sessionId = uuidv4();
-
-    await pool.query(
-      `INSERT INTO sessions (id, scenario_id, mode, user_a_id, status)
-       VALUES (?, ?, ?, ?, 'waiting')`,
-      [sessionId, scenario.id, mode, userId]
-    );
-
-    const inviteCode = crypto.randomBytes(3).toString('hex').slice(0, 6);
-
-    await redisClient.setex(
-      `invite:${inviteCode}`,
-      600,
-      JSON.stringify({ sessionId, mode, creatorId: userId })
-    );
-
-    logger.info(`Invite created | code=${inviteCode} session=${sessionId} user=${userId}`);
-
-    res.status(201).json({
-      data: {
-        inviteCode,
-        inviteLink: `${req.protocol}://${req.get('host')}/invite/${inviteCode}`,
-        sessionId,
-        scenarioTitle: scenario.title,
-      },
-    });
-  } catch (err) {
-    next(err);
-  }
-});
-
-// POST /api/sessions/join-invite/:code
-router.post('/join-invite/:code', async (req, res, next) => {
-  try {
-    const userId = req.user.id;
-    const { code } = req.params;
-
-    const raw = await redisClient.get(`invite:${code}`);
-    if (!raw) return next(new AppError('Invite not found or expired', 404));
-
-    const { sessionId, creatorId } = JSON.parse(raw);
-    if (creatorId === userId) return next(new AppError('You cannot join your own invite', 400));
-
-    const [rows] = await pool.query('SELECT * FROM sessions WHERE id = ?', [sessionId]);
-    const session = rows[0];
-    if (!session) return next(new AppError('Session not found', 404));
-    if (session.status !== 'waiting') return next(new AppError('Session already started', 400));
-
-    const roles = Math.random() < 0.5 ? ['role_a', 'role_b'] : ['role_b', 'role_a'];
-
-    await pool.query(
-      `UPDATE sessions SET user_b_id = ?, user_a_role = ?, user_b_role = ?, status = 'in_progress', started_at = NOW()
-       WHERE id = ?`,
-      [userId, roles[0], roles[1], sessionId]
-    );
-
-    await redisClient.del(`invite:${code}`);
-
-    logger.info(`Invite accepted | code=${code} session=${sessionId} joiner=${userId}`);
-
-    res.status(200).json({
-      data: {
-        sessionId,
-        mode: session.mode,
-        role: roles[1],
-      },
-    });
-  } catch (err) {
-    next(err);
-  }
-});
-
-// GET /api/sessions/invite-info/:code
-router.get('/invite-info/:code', async (req, res, next) => {
-  try {
-    const { code } = req.params;
-
-    const raw = await redisClient.get(`invite:${code}`);
-    if (!raw) return next(new AppError('Invite not found or expired', 404));
-
-    const { sessionId, creatorId } = JSON.parse(raw);
-
-    const [[session]] = await pool.query(
-      `SELECT s.id, s.mode, s.status, sc.title AS scenario_title, u.display_name AS creator_name
-       FROM sessions s
-       LEFT JOIN scenarios sc ON s.scenario_id = sc.id
-       LEFT JOIN users u ON u.id = s.user_a_id
-       WHERE s.id = ?`,
-      [sessionId]
-    );
-
-    if (!session) return next(new AppError('Session not found', 404));
-
-    res.json({ data: { sessionId, mode: session.mode, scenarioTitle: session.scenario_title, creatorName: session.creator_name } });
-  } catch (err) {
-    next(err);
-  }
-});
 
 // POST /api/sessions/ai-practice
 router.post('/ai-practice', async (req, res, next) => {

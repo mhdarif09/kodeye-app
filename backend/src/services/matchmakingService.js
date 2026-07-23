@@ -6,7 +6,7 @@ const pool = require('../db/mysql');
 const logger = require('../utils/logger');
 
 const QUEUE_TTL_SECONDS = 300; // 5 min hard max before Redis auto-cleans
-const MATCH_TIMEOUT_MS = 2 * 60 * 1000; // 2 minutes
+const MATCH_TIMEOUT_MS = 60 * 1000; // 60 seconds
 
 const difficultyLabels = { beginner: 'Pemula', intermediate: 'Menengah', advanced: 'Lanjutan' };
 
@@ -247,6 +247,44 @@ ${ic.template || ''}
 let _io = null;
 const setIo = (io) => { _io = io; };
 
+const BOT_USER_ID = '00000000-0000-0000-0000-000000000001';
+
+const createAiOpponentSession = async (userId, mode, category, difficulty) => {
+  if (mode !== 'duel') return null;
+  
+  try {
+    const [rows] = await pool.query(
+      `SELECT * FROM scenarios 
+       WHERE mode = ? AND category = ? AND difficulty = ? AND is_active = 1 
+       ORDER BY RAND() LIMIT 1`,
+      [mode, category, difficulty]
+    );
+    
+    if (!rows.length) {
+      logger.warn(`No scenarios for AI fallback | mode=${mode} cat=${category} diff=${difficulty}`);
+      return null;
+    }
+    
+    const scenario = rows[0];
+    const sessionId = uuidv4();
+    const roles = Math.random() < 0.5 ? ['role_a', 'role_b'] : ['role_b', 'role_a'];
+    
+    await pool.query(
+      `INSERT INTO sessions
+         (id, scenario_id, mode, user_a_id, user_b_id, user_a_role, user_b_role, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'waiting')`,
+      [sessionId, scenario.id, mode, userId, BOT_USER_ID, roles[0], roles[1]]
+    );
+    
+    logger.info(`AI opponent session created | session=${sessionId} user=${userId} scenario=${scenario.id}`);
+    
+    return { sessionId, scenario, userRole: roles[0], botRole: roles[1] };
+  } catch (err) {
+    logger.error(`AI opponent creation failed | user=${userId}`, { error: err.message });
+    return null;
+  }
+};
+
 const findMatch = async () => {
   try {
     const keys = await redisClient.keys('queue:*');
@@ -265,6 +303,34 @@ const findMatch = async () => {
             // Remove the timed-out entry from queue
             await redisClient.lrem(key, 1, item);
             logger.warn(`Queue timeout for user ${entry.userId} on ${key}`);
+
+            // Auto-create AI opponent for Duel mode
+            if (mode === 'duel') {
+              const aiSession = await createAiOpponentSession(entry.userId, mode, category, difficulty);
+              if (aiSession && _io) {
+                _io.to(`user:${entry.userId}`).emit('match_briefing', {
+                  sessionId: aiSession.sessionId,
+                  role: aiSession.userRole,
+                  roleName: aiSession.scenario[`role_a_name_id`] || aiSession.scenario[`role_a_name`] || 'Peran A',
+                  roleNameEn: aiSession.scenario[`role_a_name`] || aiSession.scenario[`role_a_name_id`] || 'Role A',
+                  briefing: aiSession.scenario[`role_a_briefing_id`] || aiSession.scenario[`role_a_briefing`] || '',
+                  briefingEn: aiSession.scenario[`role_a_briefing`] || aiSession.scenario[`role_a_briefing_id`] || '',
+                  scenarioTitle: aiSession.scenario.title_id || aiSession.scenario.title,
+                  scenarioTitleEn: aiSession.scenario.title || aiSession.scenario.title_id,
+                  category: aiSession.scenario.category,
+                  difficulty: aiSession.scenario.difficulty,
+                  mode: aiSession.scenario.mode,
+                  durationSeconds: aiSession.scenario.duration_seconds,
+                  problem: null,
+                  problemEn: null,
+                  template: null,
+                  templateLanguage: null,
+                  isBotOpponent: true,
+                });
+                logger.info(`AI opponent assigned after timeout | user=${entry.userId} session=${aiSession.sessionId}`);
+                continue;
+              }
+            }
 
             if (_io) {
               _io.to(`user:${entry.userId}`).emit('match:timeout', {
