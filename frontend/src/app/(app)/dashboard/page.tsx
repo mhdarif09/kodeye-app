@@ -35,6 +35,7 @@ interface CurriculumItem {
   url: string;
   category: string | null;
   level_number: number | null;
+  created_at?: string;
   author: string | null;
   icon?: string;
 }
@@ -90,7 +91,7 @@ export default function DashboardPage() {
         setStats(statsRes.data.data ?? statsRes.data);
         setScenarios(scenariosRes.data.data ?? []);
         const apiData = curriculumRes.data?.data ?? [];
-        setCurriculum(apiData);
+        setCurriculum(apiData.sort((a: CurriculumItem, b: CurriculumItem) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()));
         if (donationRes?.data?.data) setDonation(donationRes.data.data);
       } catch (error) {
         console.error("Failed to fetch dashboard data", error);

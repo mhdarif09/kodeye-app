@@ -5,8 +5,8 @@ const config = require('../config/env');
 const logger = require('../utils/logger');
 
 const groq = new Groq({ apiKey: config.groq.apiKey });
-const MODEL = 'llama-3.3-70b-versatile';
-const FALLBACK_MODEL = 'llama-3.1-8b-instant';
+const MODEL = 'qwen/qwen3.6-27b';
+const FALLBACK_MODEL = 'llama-3.3-70b-versatile';
 const MAX_TOKENS = 256;
 
 const BOT_USER_ID = '00000000-0000-0000-0000-000000000001';

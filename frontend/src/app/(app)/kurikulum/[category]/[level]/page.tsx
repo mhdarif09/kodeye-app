@@ -8,6 +8,16 @@ import remarkGfm from "remark-gfm";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
 import { MatchmakingModal } from "@/components/lobby/MatchmakingModal";
+import { Button } from "@/components/ui/Button";
+import { CodeQuestionEditor } from "@/components/quiz/CodeQuestionEditor";
+
+interface QuizQuestion {
+  question: string;
+  options: string[];
+  correct: number;
+  code?: string;
+  language?: string;
+}
 
 interface LevelDetail {
   id: string;
@@ -21,6 +31,7 @@ interface LevelDetail {
   mode: string;
   access: string;
   author: string | null;
+  quiz_questions?: QuizQuestion[] | string | null;
 }
 
 const MODE_ICONS: Record<string, { icon: string; label: string; action: string }> = {
@@ -62,6 +73,11 @@ export default function LevelReaderPage() {
   const [aiScenarioId, setAiScenarioId] = useState<string | undefined>();
   const [inviteLoading, setInviteLoading] = useState(false);
   const [showActions, setShowActions] = useState(false);
+  const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
+  const [quizAnswers, setQuizAnswers] = useState<number[]>([]);
+  const [quizResults, setQuizResults] = useState<{ correct: boolean; correctIndex: number }[] | null>(null);
+  const [quizSubmitted, setQuizSubmitted] = useState(false);
+  const [submittingQuiz, setSubmittingQuiz] = useState(false);
 
   const levelNum = parseInt(level, 10);
 
@@ -80,7 +96,18 @@ export default function LevelReaderPage() {
 
         api.get(`/api/curriculum/${match.id}`)
           .then((detailRes) => {
-            setItem(detailRes.data.data);
+            const data = detailRes.data.data;
+            setItem(data);
+            const raw = data.quiz_questions;
+            if (raw) {
+              try {
+                const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+                setQuizQuestions(Array.isArray(parsed) ? parsed : []);
+                setQuizAnswers(new Array(Array.isArray(parsed) ? parsed.length : 0).fill(-1));
+              } catch {
+                setQuizQuestions([]);
+              }
+            }
           })
           .catch((err) => {
             if (err.response?.status === 403) {
@@ -128,6 +155,32 @@ export default function LevelReaderPage() {
     }
   };
 
+  const handleSubmitQuiz = async () => {
+    if (!item || submittingQuiz) return;
+    setSubmittingQuiz(true);
+    try {
+      const res = await api.post(`/api/curriculum/${item.id}/submit-quiz`, { answers: quizAnswers });
+      const { results, passed, score } = res.data.data;
+      setQuizResults(results);
+      setQuizSubmitted(true);
+      if (passed) {
+        toast.success(`🎉 Lulus! Skor: ${score}/${results.length}`);
+      } else {
+        toast.error(`Skor: ${score}/${results.length}. Coba lagi!`);
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Gagal mengirim jawaban");
+    } finally {
+      setSubmittingQuiz(false);
+    }
+  };
+
+  const handleRetryQuiz = () => {
+    setQuizAnswers(new Array(quizQuestions.length).fill(-1));
+    setQuizResults(null);
+    setQuizSubmitted(false);
+  };
+
   if (loading) {
     return (
       <div className="flex-1 p-4 md:p-8 max-w-3xl mx-auto w-full space-y-4">
@@ -147,7 +200,7 @@ export default function LevelReaderPage() {
 
   return (
     <div className="flex-1 overflow-auto pb-8">
-      <div className="max-w-3xl mx-auto px-4 md:px-8 py-6 md:py-10 space-y-8">
+      <div className="max-w-3xl mx-auto px-4 md:px-8 py-6 md:py-10 space-y-6 md:space-y-8">
         {/* Back */}
         <button
           onClick={() => router.push(`/kurikulum/${category}`)}
@@ -244,7 +297,7 @@ export default function LevelReaderPage() {
 
         {/* Content */}
         <div className="relative">
-          <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:text-foreground prose-p:text-muted-foreground/90 prose-strong:text-foreground prose-code:text-primary prose-pre:bg-muted/50 prose-pre:border prose-pre:border-border/50 prose-a:text-primary prose-li:text-muted-foreground/90">
+          <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:text-foreground prose-p:text-muted-foreground/90 prose-strong:text-foreground prose-code:text-primary prose-pre:bg-muted/50 prose-pre:border prose-pre:border-border/50 prose-a:text-primary prose-li:text-muted-foreground/90 prose-img:rounded-lg prose-img:max-w-full break-words overflow-x-auto">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
               {item.content || item.description || ""}
             </ReactMarkdown>
@@ -271,6 +324,107 @@ export default function LevelReaderPage() {
             </div>
           )}
         </div>
+
+        {/* Quiz */}
+        {!locked && quizQuestions.length > 0 && (
+          <div className="space-y-6 pt-4 border-t border-border/50">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-base font-bold">Kuis Pemahaman</h2>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Jawab pertanyaan berikut untuk menyelesaikan level ini
+                </p>
+              </div>
+              {quizSubmitted && (
+                <Button variant="ghost" size="sm" onClick={handleRetryQuiz}>
+                  Ulangi
+                </Button>
+              )}
+            </div>
+
+            {quizQuestions.map((q, qIdx) => {
+              const result = quizResults?.[qIdx];
+              const isCorrect = result?.correct;
+              const selected = quizAnswers[qIdx];
+
+              return (
+                <div key={qIdx} className="rounded-xl border border-border/50 bg-muted/10 p-4 md:p-5 space-y-4">
+                  <p className="text-sm font-medium leading-relaxed">
+                    {qIdx + 1}. {q.question}
+                  </p>
+
+                  {q.code && (
+                    <CodeQuestionEditor
+                      value={q.code}
+                      onChange={() => {}}
+                      language={q.language || "javascript"}
+                      readOnly
+                    />
+                  )}
+
+                  <div className="space-y-2">
+                    {q.options.map((opt, oIdx) => {
+                      let classes = "w-full text-left px-4 py-2.5 rounded-lg text-sm border transition-all";
+                      if (quizSubmitted) {
+                        if (oIdx === result?.correctIndex) {
+                          classes += " border-green-500/50 bg-green-500/10 text-green-600 dark:text-green-400";
+                        } else if (oIdx === selected && !isCorrect) {
+                          classes += " border-red-500/50 bg-red-500/10 text-red-600 dark:text-red-400";
+                        } else {
+                          classes += " border-border/30 text-muted-foreground/50";
+                        }
+                      } else {
+                        classes += selected === oIdx
+                          ? " border-primary bg-primary/10 text-primary"
+                          : " border-border/30 hover:border-border/60 hover:bg-muted/20 cursor-pointer";
+                      }
+
+                      return (
+                        <button
+                          key={oIdx}
+                          disabled={quizSubmitted}
+                          onClick={() => {
+                            if (quizSubmitted) return;
+                            const next = [...quizAnswers];
+                            next[qIdx] = oIdx;
+                            setQuizAnswers(next);
+                          }}
+                          className={classes}
+                        >
+                          <span className="inline-block w-5 h-5 rounded-full border border-current text-[11px] font-bold text-center leading-5 mr-2 flex-shrink-0">
+                            {String.fromCharCode(65 + oIdx)}
+                          </span>
+                          {opt}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {quizSubmitted && (
+                    <div className={`text-xs font-medium px-3 py-1.5 rounded-lg ${
+                      isCorrect
+                        ? "bg-green-500/10 text-green-600 dark:text-green-400"
+                        : "bg-red-500/10 text-red-600 dark:text-red-400"
+                    }`}>
+                      {isCorrect ? "✅ Jawaban benar" : "❌ Jawaban salah"}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+
+            {!quizSubmitted && quizAnswers.some((a) => a >= 0) && (
+              <Button
+                onClick={handleSubmitQuiz}
+                isLoading={submittingQuiz}
+                className="w-full"
+                size="lg"
+              >
+                Kumpulkan Jawaban
+              </Button>
+            )}
+          </div>
+        )}
 
         {/* Bottom navigation */}
         <div className="flex items-center justify-between pt-6 border-t border-border/50">
