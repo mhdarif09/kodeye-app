@@ -1,12 +1,16 @@
 'use strict';
 
+const Groq = require('groq-sdk');
+const config = require('../config/env');
 const logger = require('../utils/logger');
 
-/**
- * Heuristic-based session scorer (no external AI dependency).
- * Scores participation, effort, session duration, and conversation balance.
- */
+const groq = new Groq({ apiKey: config.groq.apiKey });
+const MODEL = 'qwen/qwen3.6-27b';
+const FALLBACK_MODEL = 'llama-3.3-70b-versatile';
 
+/**
+ * Score session using Groq AI (qwen/qwen3.6-27b) with heuristic fallback.
+ */
 const scoreSession = async (session, scenario) => {
   const {
     id: sessionId,
@@ -31,6 +35,18 @@ const scoreSession = async (session, scenario) => {
   const systemMessages = transcript.filter(m => m.role === 'system');
   const chatMessages = transcript.filter(m => m.role !== 'system');
 
+  try {
+    const aiResult = await scoreWithGroq(mode, chatMessages, ai_criteria, durationRatio, user_a_role, user_b_role, scenario.title);
+    if (aiResult) {
+      logger.info(`Groq AI scoring | session=${sessionId} mode=${mode}`);
+      return aiResult;
+    }
+  } catch (err) {
+    logger.warn(`Groq scoring failed, falling back to heuristic | session=${sessionId}`, { error: err.message });
+  }
+
+  // Fallback to heuristic
+  logger.info(`Heuristic scoring fallback | session=${sessionId} mode=${mode}`);
   if (mode === 'coop') {
     const teamResult = evaluateTeam(chatMessages, ai_criteria, durationRatio, mode);
     logger.info(`Heuristic scoring (coop) | session=${sessionId} score=${teamResult.score}`);
@@ -47,6 +63,111 @@ const scoreSession = async (session, scenario) => {
   return { userAResult, userBResult };
 };
 
+const scoreWithGroq = async (mode, chatMessages, criteria, durationRatio, roleA, roleB, scenarioTitle) => {
+  if (!chatMessages.length) return null;
+
+  const chatLog = chatMessages
+    .map(m => `[${m.role}]: ${m.text}`)
+    .join('\n');
+
+  const criteriaText = criteria ? JSON.stringify(criteria, null, 2) : 'General communication effectiveness, problem solving, collaboration';
+
+  const prompt = mode === 'coop'
+    ? buildCoopPrompt(chatLog, criteriaText, durationRatio, scenarioTitle)
+    : buildDuelPrompt(chatLog, criteriaText, durationRatio, roleA, roleB, scenarioTitle);
+
+  const modelsToTry = [MODEL, FALLBACK_MODEL];
+
+  for (const model of modelsToTry) {
+    try {
+      const completion = await groq.chat.completions.create({
+        model,
+        max_tokens: 512,
+        temperature: 0.3,
+        response_format: { type: 'json_object' },
+        messages: [{ role: 'user', content: prompt }],
+      });
+
+      const text = completion.choices[0]?.message?.content ?? '';
+      if (!text.trim()) continue;
+
+      const parsed = JSON.parse(text);
+      return mode === 'coop'
+        ? { teamResult: normalizeCoopResult(parsed) }
+        : { userAResult: normalizeDuelResult(parsed, 'A'), userBResult: normalizeDuelResult(parsed, 'B') };
+    } catch (err) {
+      logger.warn(`AI scoring model ${model} failed`, { error: err.message });
+    }
+  }
+
+  return null;
+};
+
+const buildCoopPrompt = (chatLog, criteriaText, durationRatio, scenarioTitle) => `
+You are an expert evaluator assessing a collaborative roleplay session between two professionals.
+
+Scenario: ${scenarioTitle}
+Session duration ratio: ${(durationRatio * 100).toFixed(0)}% of expected time
+
+Evaluation criteria:
+${criteriaText}
+
+Conversation transcript:
+${chatLog}
+
+Return ONLY valid JSON with this exact structure:
+{
+  "score": 0-100,
+  "feedback": "Detailed feedback for the team (2-3 paragraphs)",
+  "strengths": ["strength1", "strength2"],
+  "improvements": ["improvement1", "improvement2"],
+  "criteriaScores": { "communication": 0-100, "collaboration": 0-100, "problemSolving": 0-100, "professionalism": 0-100 }
+}
+`.trim();
+
+const buildDuelPrompt = (chatLog, criteriaText, durationRatio, roleA, roleB, scenarioTitle) => `
+You are an expert evaluator assessing a competitive roleplay session between two professionals.
+
+Scenario: ${scenarioTitle}
+Session duration ratio: ${(durationRatio * 100).toFixed(0)}% of expected time
+
+Role A: ${roleA}
+Role B: ${roleB}
+
+Evaluation criteria:
+${criteriaText}
+
+Conversation transcript:
+${chatLog}
+
+Return ONLY valid JSON with this exact structure:
+{
+  "roleA": { "score": 0-100, "feedback": "feedback for role A", "strengths": ["s1"], "improvements": ["i1"], "criteriaScores": { "communication": 0-100, "argumentation": 0-100, "adaptability": 0-100, "professionalism": 0-100 } },
+  "roleB": { "score": 0-100, "feedback": "feedback for role B", "strengths": ["s1"], "improvements": ["i1"], "criteriaScores": { "communication": 0-100, "argumentation": 0-100, "adaptability": 0-100, "professionalism": 0-100 } }
+}
+`.trim();
+
+const normalizeCoopResult = (parsed) => ({
+  score: Math.max(0, Math.min(100, parsed.score ?? 0)),
+  feedback: parsed.feedback ?? '',
+  strengths: Array.isArray(parsed.strengths) ? parsed.strengths : [],
+  improvements: Array.isArray(parsed.improvements) ? parsed.improvements : [],
+  criteriaScores: parsed.criteriaScores ?? {},
+});
+
+const normalizeDuelResult = (parsed, role) => {
+  const key = role === 'A' ? 'roleA' : 'roleB';
+  const data = parsed[key] ?? {};
+  return {
+    score: Math.max(0, Math.min(100, data.score ?? 0)),
+    feedback: data.feedback ?? '',
+    strengths: Array.isArray(data.strengths) ? data.strengths : [],
+    improvements: Array.isArray(data.improvements) ? data.improvements : [],
+    criteriaScores: data.criteriaScores ?? {},
+  };
+};
+
+// --- Heuristic fallback functions ---
 const evaluatePlayer = (myMsgs, opponentMsgs, criteria, durationRatio, mode, role) => {
   const myCount = myMsgs.length;
   const totalMsgs = myCount + opponentMsgs.length;

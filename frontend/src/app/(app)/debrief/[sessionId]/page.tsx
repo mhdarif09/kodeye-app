@@ -329,21 +329,32 @@ export default function DebriefPage({ params }: { params: Promise<{ sessionId: s
         </div>
       </div>
 
-      {/* ── AI Score (Coming Soon) ── */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Penilaian AI</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col items-center justify-center py-8 gap-3 text-center">
-            <span className="text-3xl">🚧</span>
-            <p className="text-sm font-medium">Coming Soon</p>
-            <p className="text-xs text-muted-foreground max-w-xs">
-              Fitur penilaian AI sedang dalam pengembangan. Kamu tetap bisa lihat sesi dan referensi materi.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+{/* ── AI Score ── */}
+      {isScored ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Penilaian AI</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <AIScoreSection feedback={debrief.myFeedback!} score={score} />
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Penilaian AI</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col items-center justify-center py-8 gap-3 text-center">
+              <span className="text-3xl">🤖</span>
+              <p className="text-sm font-medium">Menghitung skor...</p>
+              <p className="text-xs text-muted-foreground max-w-xs">
+                Penilaian AI sedang diproses. Silakan refresh sebentar lagi.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* ── Resource Links ── */}
       {resourceLinks.length > 0 && (

@@ -31,6 +31,7 @@ interface LevelDetail {
   mode: string;
   access: string;
   author: string | null;
+  created_at?: string;
   quiz_questions?: QuizQuestion[] | string | null;
 }
 
@@ -87,6 +88,8 @@ export default function LevelReaderPage() {
     api.get("/api/admin/curriculum/public")
       .then((res) => {
         const all: LevelDetail[] = res.data?.data ?? [];
+        // Sort by created_at desc to get newest first (handles duplicates)
+        all.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
         const match = all.find((i) => i.category === category && i.level_number === levelNum);
         if (!match) {
           toast.error("Materi tidak ditemukan");
@@ -131,6 +134,20 @@ export default function LevelReaderPage() {
     const mode = item.mode;
 
     if (mode === "solo") {
+      if (quizQuestions.length > 0 && !quizSubmitted) {
+        // Scroll to quiz section
+        const quizEl = document.getElementById("quiz-section");
+        if (quizEl) {
+          quizEl.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+        toast("Selesaikan kuis dulu untuk melanjutkan", { icon: "📝" });
+        return;
+      }
+      if (quizQuestions.length > 0 && quizSubmitted && !quizResults?.every((r) => r.correct)) {
+        toast("Kuis belum lulus. Coba lagi!", { icon: "🔁" });
+        return;
+      }
+      // Quiz passed or no quiz → open AI practice
       setMatchMode("ai");
       setAiScenarioId(item.id);
       setMatchModal(true);
@@ -323,11 +340,23 @@ export default function LevelReaderPage() {
               </div>
             </div>
           )}
+
+          {!locked && quizQuestions.length > 0 && !quizSubmitted && (
+            <div className="text-center py-4">
+              <Button
+                variant="secondary"
+                size="lg"
+                onClick={() => document.getElementById("quiz-section")?.scrollIntoView({ behavior: "smooth" })}
+              >
+                Mulai Kuis {quizQuestions.length} Soal
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Quiz */}
         {!locked && quizQuestions.length > 0 && (
-          <div className="space-y-6 pt-4 border-t border-border/50">
+          <div id="quiz-section" className="space-y-6 pt-4 border-t border-border/50">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-base font-bold">Kuis Pemahaman</h2>
